@@ -1,0 +1,104 @@
+-- 用户表
+CREATE TABLE users (
+    id VARCHAR(50) PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    display_name VARCHAR(100),
+    avatar_url VARCHAR(500),
+    bio TEXT,
+    career_stage VARCHAR(50),
+    identity_type VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 首页内容表
+CREATE TABLE home_contents (
+    id VARCHAR(50) PRIMARY KEY,
+    title VARCHAR(500) NOT NULL,
+    content_type VARCHAR(50) NOT NULL, -- expert/user/activity
+    author_id VARCHAR(50),
+    author_name VARCHAR(100),
+    view_count INT DEFAULT 0,
+    interactive_count INT DEFAULT 0,
+    content TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (author_id) REFERENCES users(id)
+);
+
+-- 话题表
+CREATE TABLE topics (
+    id VARCHAR(50) PRIMARY KEY,
+    title VARCHAR(500) NOT NULL,
+    tag VARCHAR(100),
+    participant_count INT DEFAULT 0,
+    interactive_count INT DEFAULT 0,
+    latest_reply_time TIMESTAMP,
+    guide_text TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 话题帖子表
+CREATE TABLE topic_posts (
+    id VARCHAR(50) PRIMARY KEY,
+    topic_id VARCHAR(50) NOT NULL,
+    user_id VARCHAR(50) NOT NULL,
+    user_name VARCHAR(100),
+    content TEXT NOT NULL,
+    images JSON,
+    tags JSON,
+    like_count INT DEFAULT 0,
+    comment_count INT DEFAULT 0,
+    collect_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (topic_id) REFERENCES topics(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- 帖子互动表
+CREATE TABLE post_interactions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    post_id VARCHAR(50) NOT NULL,
+    user_id VARCHAR(50) NOT NULL,
+    interact_type VARCHAR(50) NOT NULL, -- like/comment/collect
+    comment_content TEXT,
+    quote_post_id VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES topic_posts(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- 兴趣圈子表
+CREATE TABLE circles (
+    id VARCHAR(50) PRIMARY KEY,
+    group_name VARCHAR(200) NOT NULL,
+    tags JSON,
+    member_count INT DEFAULT 0,
+    latest_activity VARCHAR(500),
+    intro TEXT,
+    join_type VARCHAR(50), -- free/audit
+    created_by VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+-- 圈子成员表
+CREATE TABLE circle_members (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    circle_id VARCHAR(50) NOT NULL,
+    user_id VARCHAR(50) NOT NULL,
+    role VARCHAR(50) DEFAULT 'member', -- member/admin/creator
+    join_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (circle_id) REFERENCES circles(id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    UNIQUE KEY unique_circle_user (circle_id, user_id)
+);
+
+-- 搜索历史表
+CREATE TABLE search_histories (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(50) NOT NULL,
+    keyword VARCHAR(200) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
