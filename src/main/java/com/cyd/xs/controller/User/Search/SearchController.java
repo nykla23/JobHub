@@ -52,7 +52,7 @@ public class SearchController {
     @GetMapping("/result")
     public ResponseEntity<Result<?>> search(@RequestParam String keyword,
                                             @RequestParam(required = false) String type,
-                                            @RequestParam(required = false) String sort,
+                                            @RequestParam(required = false, defaultValue = "hot") String sort,
                                             @RequestParam(defaultValue = "1") Integer pageNum,
                                             @RequestParam(defaultValue = "10") Integer pageSize,
                                             Authentication authentication) {
@@ -66,8 +66,8 @@ public class SearchController {
     }
 
     private String getUserIdFromAuthentication(Authentication authentication) {
-        if (authentication != null && authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.UserDetails) {
-            return ((org.springframework.security.core.userdetails.UserDetails) authentication.getPrincipal()).getUsername();
+        if (authentication != null && authentication.isAuthenticated()) {
+            return authentication.getName(); // 假设用户名就是userId
         }
         throw new RuntimeException("用户未认证");
     }

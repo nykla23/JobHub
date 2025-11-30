@@ -5,54 +5,75 @@ import java.util.List;
 
 @Data
 public class SearchDTO {
-    private List<TopicResult> topic;
-    private List<ContentResult> content;
-    private List<String> hotKeywords;
-    private List<String> historyKeywords;
+    private String keyword;      // 搜索关键词
+    private String type;         // 结果类型
+    private Long total;          // 总记录数
+    private Integer pageNum;     // 当前页
+    private Integer pageSize;    // 每页条数
+    private List<Object> list;   // 搜索结果列表
 
+    // 搜索历史和热门搜索字段
+    private List<String> searchHistory;  // 个人搜索历史
+    private List<String> hotSearch;      // 热门搜索
+
+    // 话题搜索结果
     @Data
     public static class TopicResult {
-        private String topicId;
+        private String id;
         private String title;
+        private String desc;
+        private Integer hotValue;
+        private List<String> tags;
         private Integer participantCount;
+        private String link;
     }
 
+    // 内容搜索结果
     @Data
     public static class ContentResult {
-        private String contentId;
+        private String id;
         private String title;
         private String author;
+        private String link;
     }
 
-    public List<TopicResult> getTopic() {
-        return topic;
+    // 圈子搜索结果
+    @Data
+    public static class GroupResult {
+        private String id;
+        private String name;
+        private List<String> tags;
+        private Integer memberCount;
+        private String intro;
+        private String avatar;
+        private Boolean isJoined;
+        private String link;
     }
 
-    public void setTopic(List<TopicResult> topic) {
-        this.topic = topic;
+    // 用户搜索结果
+    @Data
+    public static class UserResult {
+        private String id;
+        private String nickname;
+        private String identity;
+        private String avatar;
+        private String intro;
+        private String link;
     }
 
-    public List<ContentResult> getContent() {
-        return content;
+    // 专家搜索结果
+    @Data
+    public static class ExpertResult {
+        private String id;
+        private String name;
+        private String avatar;
+        private String certification;
+        private String expertise;
+        private Double score;
+        private Integer consultCount;
+        private String intro;
+        private String link;
     }
 
-    public void setContent(List<ContentResult> content) {
-        this.content = content;
-    }
 
-    public List<String> getHotKeywords() {
-        return hotKeywords;
-    }
-
-    public void setHotKeywords(List<String> hotKeywords) {
-        this.hotKeywords = hotKeywords;
-    }
-
-    public List<String> getHistoryKeywords() {
-        return historyKeywords;
-    }
-
-    public void setHistoryKeywords(List<String> historyKeywords) {
-        this.historyKeywords = historyKeywords;
-    }
 }
