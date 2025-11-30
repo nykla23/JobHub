@@ -48,14 +48,15 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 无状态会话（依赖JWT）
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/home/**").authenticated()
+                        .requestMatchers("/api/v1/search/**").authenticated()
                         // 放行注册、登录接口
                         .requestMatchers("/api/user/register", "/api/user/login").permitAll()
                         // 其他接口需要认证
                         .anyRequest().authenticated()
-                );
-
-        // 添加JWT过滤器（在用户名密码认证过滤器之前）
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -1,12 +1,13 @@
 package com.cyd.xs.service.Impl;
 
+import cn.hutool.json.JSONUtil;
 import com.cyd.xs.dto.user.Home.HomeDTO;
 import com.cyd.xs.dto.user.Search.SearchDTO;
 import com.cyd.xs.entity.User.HomeContent.HomeContent;
 import com.cyd.xs.entity.User.Topic.Topic;
-import com.cyd.xs.mapper.HomeContentMapper;
-import com.cyd.xs.mapper.TopicMapper;
-import com.cyd.xs.mapper.SearchHistoryMapper;
+import com.cyd.xs.entity.User.User;
+import com.cyd.xs.entity.User.UserProfile;
+import com.cyd.xs.mapper.*;
 import com.cyd.xs.service.HomeService;
 import com.cyd.xs.util.IDGenerator;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,109 @@ public class HomeServiceImpl implements HomeService {
     private final HomeContentMapper homeContentMapper;
     private final TopicMapper topicMapper;
     private final SearchHistoryMapper searchHistoryMapper;
+    private final CarouselMapper carouselMapper;
+    private final HotActivityMapper hotActivityMapper;
+    private final UserMapper userMapper;
+
+    @Override
+    public HomeDTO getHomeData(String userId) {
+        log.info("用户 {} 获取首页数据", userId);
+
+        HomeDTO homeDTO = new HomeDTO();
+
+        try {
+            // 获取用户信息和身份
+            User user = userMapper.selectById(Long.valueOf(userId));
+            if (user != null) {
+                // 解析用户身份信息
+                UserProfile profile = JSONUtil.toBean(user.getProfileJson(), UserProfile.class);
+                homeDTO.setUserIdentity(profile.getCareerStage());
+            } else {
+                homeDTO.setUserIdentity("student"); // 默认身份
+            }
+
+            // 获取轮播图
+            var carousels = carouselMapper.findActiveCarousels(5);
+            homeDTO.setCarousel(carousels.stream().map(carousel -> {
+                HomeDTO.Carousel c = new HomeDTO.Carousel();
+                c.setId(carousel.getId());
+                c.setTitle(carousel.getTitle());
+                c.setImageUrl(carousel.getImageUrl());
+                c.setDesc(carousel.getDescription());
+                c.setLink(carousel.getLink());
+                return c;
+            }).collect(Collectors.toList()));
+
+            // 获取热门活动
+            var hotActivities = hotActivityMapper.findHotActivities(3);
+            homeDTO.setHotActivities(hotActivities.stream().map(activity -> {
+                HomeDTO.HotActivity ha = new HomeDTO.HotActivity();
+                ha.setId(activity.getId());
+                ha.setTitle(activity.getTitle());
+                ha.setTime(activity.getTime());
+                ha.setParticipantCount(activity.getParticipantCount());
+                ha.setLink(activity.getLink());
+                return ha;
+            }).collect(Collectors.toList()));
+
+            // 获取推荐内容
+            var contents = homeContentMapper.findRecommendedContents(5);
+            HomeDTO.RecommendedContent recommendedContent = new HomeDTO.RecommendedContent();
+            recommendedContent.setTotal(homeContentMapper.countPublishedContents());
+            recommendedContent.setPageNum(1);
+            recommendedContent.setPageSize(5);
+            recommendedContent.setList(contents.stream().map(content -> {
+                HomeDTO.ContentItem item = new HomeDTO.ContentItem();
+                item.setId(content.getId());
+                item.setTitle(content.getTitle());
+                item.setType(content.getContentType());
+                item.setAuthor(content.getAuthorName());
+                item.setLikeCount(content.getLikeCount() != null ? content.getLikeCount() : 0);
+                item.setCollectCount(content.getCollectCount() != null ? content.getCollectCount() : 0);
+                item.setPublishTime(content.getCreatedAt() != null ? content.getCreatedAt().toString() : "2025-05-18 10:00:00");
+                item.setLink("/api/v1/content/" + content.getId());
+                return item;
+            }).collect(Collectors.toList()));
+            homeDTO.setRecommendedContent(recommendedContent);
+
+            return homeDTO;
+        } catch (Exception e) {
+            log.error("获取首页数据失败: {}", e.getMessage(), e);
+            throw new RuntimeException("获取首页数据失败");
+        }
+    }
+
+    @Override
+    public RecommendRefreshDTO refreshRecommend(String userId, Integer pageNum, Integer pageSize) {
+        log.info("用户 {} 刷新推荐内容, 页码: {}, 条数: {}", userId, pageNum, pageSize);
+
+        try {
+            int offset = (pageNum - 1) * pageSize;
+            var contents = homeContentMapper.findRecommendedContentsByPage(offset, pageSize);
+
+            RecommendRefreshDTO result = new RecommendRefreshDTO();
+            result.setTotal(homeContentMapper.countPublishedContents());
+            result.setPageNum(pageNum);
+            result.setPageSize(pageSize);
+            result.setList(contents.stream().map(content -> {
+                RecommendRefreshDTO.ContentItem item = new RecommendRefreshDTO.ContentItem();
+                item.setId(content.getId());
+                item.setTitle(content.getTitle());
+                item.setType(content.getContentType());
+                item.setAuthor(content.getAuthorName());
+                item.setLikeCount(content.getLikeCount() != null ? content.getLikeCount() : 0);
+                item.setCollectCount(content.getCollectCount() != null ? content.getCollectCount() : 0);
+                item.setPublishTime(content.getCreatedAt() != null ? content.getCreatedAt().toString() : "2025-05-18 10:00:00");
+                item.setLink("/api/v1/content/" + content.getId());
+                return item;
+            }).collect(Collectors.toList()));
+
+            return result;
+        } catch (Exception e) {
+            log.error("刷新推荐内容失败: {}", e.getMessage(), e);
+            throw new RuntimeException("刷新推荐内容失败");
+        }
+    }
 
     @Override
     public HomeDTO selectIdentity(String identityType, String userId) {

@@ -21,8 +21,15 @@ public class HomeContent {
     private String authorName;
     private Integer viewCount = 0;
     private Integer interactiveCount = 0;
+    private Integer likeCount = 0;
+    private Integer collectCount = 0;
     private String content;
+    private String status = "published";
+    private String description;
+    private String tags;
+    private Integer hotValue = 0;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public HomeContent() {
     }
@@ -36,6 +43,8 @@ public class HomeContent {
         this.viewCount = viewCount;
         this.interactiveCount = interactiveCount;
         this.content = content;
+        this.createdAt = createdAt;
+
     }
 
     public String getId() {
@@ -108,5 +117,61 @@ public class HomeContent {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Integer getLikeCount() {
+        return likeCount;
+    }
+
+    public void setLikeCount(Integer likeCount) {
+        this.likeCount = likeCount;
+    }
+
+    public Integer getCollectCount() {
+        return collectCount;
+    }
+
+    public void setCollectCount(Integer collectCount) {
+        this.collectCount = collectCount;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
+    }
+
+    public Integer getHotValue() {
+        return hotValue;
+    }
+
+    public void setHotValue(Integer hotValue) {
+        this.hotValue = hotValue;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

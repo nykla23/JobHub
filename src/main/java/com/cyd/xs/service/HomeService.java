@@ -26,4 +26,6 @@ public interface HomeService {
      * 首页推荐内容刷新
      */
     List<HomeDTO.RecommendContent> refreshRecommend(String userId, Integer pageSize);
+
+    HomeDTO getHomeData(String userId);
 }
