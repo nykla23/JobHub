@@ -6,47 +6,20 @@ import java.util.List;
 
 @Data
 public class TopicDTO {
-    private List<TopicItem> data;
-    private Integer total;
-    private List<Tab> tabs;
+    private Long total;
+    private Integer pageNum;
+    private Integer pageSize;
+    private List<TopicItem> list;
 
     @Data
     public static class TopicItem {
-        private String topicId;
+        private String id;
         private String title;
-        private String tag;
+        private String level; // A/S等级
+        private List<String> tags;
         private Integer participantCount;
-        private Integer interactiveCount;
+        private Integer interactionCount; // 互动数（评论+点赞+收藏）
         private LocalDateTime latestReplyTime;
-    }
-
-    @Data
-    public static class Tab {
-        private String key;
-        private String name;
-    }
-
-    public List<TopicItem> getData() {
-        return data;
-    }
-
-    public void setData(List<TopicItem> data) {
-        this.data = data;
-    }
-
-    public Integer getTotal() {
-        return total;
-    }
-
-    public void setTotal(Integer total) {
-        this.total = total;
-    }
-
-    public List<Tab> getTabs() {
-        return tabs;
-    }
-
-    public void setTabs(List<Tab> tabs) {
-        this.tabs = tabs;
+        private String link;
     }
 }

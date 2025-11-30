@@ -1,33 +1,33 @@
 package com.cyd.xs.service;
 
-import com.cyd.xs.dto.user.Topic.TopicDTO;
-import com.cyd.xs.dto.user.Topic.TopicPostRequest;
-import com.cyd.xs.entity.User.Topic.TopicPost;
-
-import java.util.List;
-import java.util.Map;
+import com.cyd.xs.dto.user.ChatRoom.ChatRoomDTO;
+import com.cyd.xs.dto.user.ChatRoom.ChatRoomDetailDTO;
+import com.cyd.xs.dto.user.ChatRoom.ChatRoomMessageDTO;
+import com.cyd.xs.dto.user.Topic.*;
 
 public interface TopicService {
 
     /**
      * 获取话题列表
      */
-    TopicDTO getTopicList(String tab, String sortType, Integer page, Integer pageSize);
+    TopicDTO getTopicList(String tag, String level, String sort, Integer pageNum, Integer pageSize);
 
     /**
      * 获取话题详情
      */
-    Map<String, Object> getTopicDetail(String topicId, Integer page, Integer pageSize);
+    TopicDetailDTO getTopicDetail(String topicId, Integer pageNum, Integer pageSize, String userId);
 
     /**
-     * 发布话题帖子
+     * 发布话题评论
      */
-    String publishPost(String userId, String topicId, String content, List<String> images, List<String> tags);
+    TopicCommentDTO publishTopicComment(String topicId, String userId, TopicCommentRequest request);
 
-    /**
-     * 话题帖子互动（点赞 / 评论 / 收藏）
-     */
-    Map<String, Integer> interactPost(String userId, String postId, String interactType,
-                                      String commentContent, String quotePostId, Boolean isCancel);
+    // 新增方法
+
+    TopicCommentLikeDTO likeTopicComment(String commentId, String userId, Boolean isLike);
+    ChatRoomDTO getChatRoomList(String status, String keyword, Integer pageNum, Integer pageSize);
+    ChatRoomDetailDTO getChatRoomDetail(String chatRoomId, String userId);
+    ChatRoomMessageDTO sendChatRoomMessage(String chatRoomId, String userId, String content);
+    EssenceNoteDTO generateEssenceNote(String chatRoomId, String userId);
 
 }

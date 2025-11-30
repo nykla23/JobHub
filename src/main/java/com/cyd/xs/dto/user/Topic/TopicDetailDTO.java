@@ -1,42 +1,56 @@
 package com.cyd.xs.dto.user.Topic;
 
 import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 public class TopicDetailDTO {
-    private List<TopicInfo> topicInfo;
-    private List<Postlist> postlist;
-    private List<SimilarTopics> similarTopics;
-
+    private TopicInfo topicInfo;
+    private ChatRoomPreview chatRoom; // 聊天室预告
+    private CommentList comments;     // 话题互动内容
 
     @Data
     public static class TopicInfo {
-        private String topicId;
+        private String id;
         private String title;
-        private String tag;
+        private String level;
+        private List<String> tags;
         private Integer participantCount;
-        private Integer interactiveCount;
+        private Integer interactionCount;
         private LocalDateTime latestReplyTime;
-        private String guideText;
+        private String intro;      // 话题简介
+        private String host;       // 话题主持人
+        private LocalDateTime createTime;
     }
 
     @Data
-    public static class Postlist {
-        private Integer postId;
-        private Integer userId;
-        private String userName;
-        private String content;
-        private LocalDateTime createdTime;
-        private Integer commentCount;
-    }
-
-    @Data
-    public static class SimilarTopics {
-        private String topicId;
+    public static class ChatRoomPreview {
         private String title;
+        private String time;
+        private String host;
+        private String scope;   // 全员可见
+        private String status;  // 预告中/进行中/已结束
     }
 
+    @Data
+    public static class CommentList {
+        private Long total;
+        private Integer pageNum;
+        private Integer pageSize;
+        private List<CommentItem> list;
+    }
+
+    @Data
+    public static class CommentItem {
+        private String id;
+        private String userId;
+        private String nickname;
+        private String avatar;
+        private String content;
+        private LocalDateTime publishTime;
+        private Integer likeCount;
+        private Integer collectCount;
+        private Integer replyCount;
+    }
 }
