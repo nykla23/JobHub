@@ -5,10 +5,57 @@ import java.util.List;
 
 @Data
 public class HomeDTO {
+    // 首页数据字段
+    private String userIdentity;
+    private List<Carousel> carousel;
+    private List<HotActivity> hotActivities;
+    private RecommendedContent recommendedContent;
+
+    // 身份选择返回的字段（保持兼容）
     private List<RecommendContent> recommendContent;
     private List<CommunityTopic> communityTopics;
     private List<Activity> activities;
 
+    // 首页数据结构
+    @Data
+    public static class Carousel {
+        private String id;
+        private String title;
+        private String imageUrl;
+        private String desc;
+        private String link;
+    }
+
+    @Data
+    public static class HotActivity {
+        private String id;
+        private String title;
+        private String time;
+        private Integer participantCount;
+        private String link;
+    }
+
+    @Data
+    public static class RecommendedContent {
+        private Long total;
+        private Integer pageNum;
+        private Integer pageSize;
+        private List<ContentItem> list;
+    }
+
+    @Data
+    public static class ContentItem {
+        private String id;
+        private String title;
+        private String type;
+        private String author;
+        private Integer likeCount;
+        private Integer collectCount;
+        private String publishTime;
+        private String link;
+    }
+
+    // 身份选择数据结构（保持兼容）
     @Data
     public static class RecommendContent {
         private String contentId;
@@ -17,7 +64,6 @@ public class HomeDTO {
         private String author;
         private Integer viewCount;
         private Integer interactiveCount;
-
     }
 
     @Data
@@ -32,29 +78,5 @@ public class HomeDTO {
         private String activityId;
         private String title;
         private String time;
-    }
-
-    public List<RecommendContent> getRecommendContent() {
-        return recommendContent;
-    }
-
-    public void setRecommendContent(List<RecommendContent> recommendContent) {
-        this.recommendContent = recommendContent;
-    }
-
-    public List<CommunityTopic> getCommunityTopics() {
-        return communityTopics;
-    }
-
-    public void setCommunityTopics(List<CommunityTopic> communityTopics) {
-        this.communityTopics = communityTopics;
-    }
-
-    public List<Activity> getActivities() {
-        return activities;
-    }
-
-    public void setActivities(List<Activity> activities) {
-        this.activities = activities;
     }
 }

@@ -2,10 +2,11 @@ package com.cyd.xs.controller.User.Home;
 
 import com.cyd.xs.Response.Result;
 import com.cyd.xs.dto.user.Home.HomeDTO;
+import com.cyd.xs.dto.user.Home.RecommendRefreshDTO;
 import com.cyd.xs.dto.user.Search.SearchDTO;
 import com.cyd.xs.service.HomeService;
 import lombok.RequiredArgsConstructor;
-import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
+import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class HomeController {
 
     private final HomeService homeService;
+
 
     /**
      * 获取首页数据（含热门活动、推荐内容）
@@ -50,8 +52,8 @@ public class HomeController {
     }
 
     private String getUserIdFromAuthentication(Authentication authentication) {
-        if (authentication != null && authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.UserDetails) {
-            return ((org.springframework.security.core.userdetails.UserDetails) authentication.getPrincipal()).getUsername();
+        if (authentication != null && authentication.isAuthenticated()) {
+            return authentication.getName(); // 假设用户名就是userId
         }
         throw new RuntimeException("用户未认证");
     }

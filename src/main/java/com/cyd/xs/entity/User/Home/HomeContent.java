@@ -1,4 +1,4 @@
-package com.cyd.xs.entity.User.HomeContent;
+package com.cyd.xs.entity.User.Home;
 
 import lombok.Data;
 import jakarta.persistence.*;

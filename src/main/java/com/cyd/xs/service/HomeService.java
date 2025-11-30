@@ -1,11 +1,22 @@
 package com.cyd.xs.service;
 
 import com.cyd.xs.dto.user.Home.HomeDTO;
+import com.cyd.xs.dto.user.Home.RecommendRefreshDTO;
 import com.cyd.xs.dto.user.Search.SearchDTO;
 
 import java.util.List;
 
 public interface HomeService {
+
+    /**
+     * 获取首页数据
+     */
+    HomeDTO getHomeData(String userId);
+
+    /**
+     * 推荐内容换一批（新版本，带分页）
+     */
+    RecommendRefreshDTO refreshRecommend(String userId, Integer pageNum, Integer pageSize);
 
     /**
      * 首次进入APP - 身份标签选择
@@ -23,9 +34,7 @@ public interface HomeService {
     void clearSearchHistory(String userId);
 
     /**
-     * 首页推荐内容刷新
+     * 首页推荐内容刷新（旧版本，保持兼容）
      */
     List<HomeDTO.RecommendContent> refreshRecommend(String userId, Integer pageSize);
-
-    HomeDTO getHomeData(String userId);
 }

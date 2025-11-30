@@ -1,15 +1,12 @@
 package com.cyd.xs.service.Impl;
 
-import cn.hutool.json.JSONUtil;
 import com.cyd.xs.dto.user.Home.HomeDTO;
+import com.cyd.xs.dto.user.Home.RecommendRefreshDTO;
 import com.cyd.xs.dto.user.Search.SearchDTO;
-import com.cyd.xs.entity.User.HomeContent.HomeContent;
+import com.cyd.xs.entity.User.Home.HomeContent;
 import com.cyd.xs.entity.User.Topic.Topic;
-import com.cyd.xs.entity.User.User;
-import com.cyd.xs.entity.User.UserProfile;
 import com.cyd.xs.mapper.*;
 import com.cyd.xs.service.HomeService;
-import com.cyd.xs.util.IDGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,47 +36,36 @@ public class HomeServiceImpl implements HomeService {
         HomeDTO homeDTO = new HomeDTO();
 
         try {
-            // 获取用户信息和身份
-            User user = userMapper.selectById(Long.valueOf(userId));
-            if (user != null) {
-                // 解析用户身份信息
-                UserProfile profile = JSONUtil.toBean(user.getProfileJson(), UserProfile.class);
-                homeDTO.setUserIdentity(profile.getCareerStage());
-            } else {
-                homeDTO.setUserIdentity("student"); // 默认身份
-            }
+            // 获取用户身份
+            homeDTO.setUserIdentity(getUserIdentity(userId));
 
             // 获取轮播图
-            var carousels = carouselMapper.findActiveCarousels(5);
-            homeDTO.setCarousel(carousels.stream().map(carousel -> {
-                HomeDTO.Carousel c = new HomeDTO.Carousel();
-                c.setId(carousel.getId());
-                c.setTitle(carousel.getTitle());
-                c.setImageUrl(carousel.getImageUrl());
-                c.setDesc(carousel.getDescription());
-                c.setLink(carousel.getLink());
-                return c;
-            }).collect(Collectors.toList()));
+            homeDTO.setCarousel(getCarouselData());
 
             // 获取热门活动
-            var hotActivities = hotActivityMapper.findHotActivities(3);
-            homeDTO.setHotActivities(hotActivities.stream().map(activity -> {
-                HomeDTO.HotActivity ha = new HomeDTO.HotActivity();
-                ha.setId(activity.getId());
-                ha.setTitle(activity.getTitle());
-                ha.setTime(activity.getTime());
-                ha.setParticipantCount(activity.getParticipantCount());
-                ha.setLink(activity.getLink());
-                return ha;
-            }).collect(Collectors.toList()));
+            homeDTO.setHotActivities(getHotActivities());
 
             // 获取推荐内容
-            var contents = homeContentMapper.findRecommendedContents(5);
-            HomeDTO.RecommendedContent recommendedContent = new HomeDTO.RecommendedContent();
-            recommendedContent.setTotal(homeContentMapper.countPublishedContents());
-            recommendedContent.setPageNum(1);
-            recommendedContent.setPageSize(5);
-            recommendedContent.setList(contents.stream().map(content -> {
+            HomeDTO.RecommendedContent recommendedContent = getHomeRecommendedContent(1, 5);
+            homeDTO.setRecommendedContent(recommendedContent);
+            return homeDTO;
+        } catch (Exception e) {
+            log.error("获取首页数据失败: {}", e.getMessage(), e);
+            throw new RuntimeException("获取首页数据失败");
+        }
+    }
+
+    private HomeDTO.RecommendedContent getHomeRecommendedContent(Integer pageNum, Integer pageSize) {
+        try {
+            int offset = (pageNum - 1) * pageSize;
+            var contents = homeContentMapper.findRecommendedContentsByPage(offset, pageSize);
+
+            HomeDTO.RecommendedContent result = new HomeDTO.RecommendedContent();
+            result.setTotal(homeContentMapper.countPublishedContents());
+            result.setPageNum(pageNum);
+            result.setPageSize(pageSize);
+
+            List<HomeDTO.ContentItem> contentList = contents.stream().map(content -> {
                 HomeDTO.ContentItem item = new HomeDTO.ContentItem();
                 item.setId(content.getId());
                 item.setTitle(content.getTitle());
@@ -87,16 +73,16 @@ public class HomeServiceImpl implements HomeService {
                 item.setAuthor(content.getAuthorName());
                 item.setLikeCount(content.getLikeCount() != null ? content.getLikeCount() : 0);
                 item.setCollectCount(content.getCollectCount() != null ? content.getCollectCount() : 0);
-                item.setPublishTime(content.getCreatedAt() != null ? content.getCreatedAt().toString() : "2025-05-18 10:00:00");
+                item.setPublishTime(content.getCreatedAt() != null ? content.getCreatedAt().toString() : LocalDateTime.now().toString());
                 item.setLink("/api/v1/content/" + content.getId());
                 return item;
-            }).collect(Collectors.toList()));
-            homeDTO.setRecommendedContent(recommendedContent);
+            }).collect(Collectors.toList());
 
-            return homeDTO;
+            result.setList(contentList);
+            return result;
         } catch (Exception e) {
-            log.error("获取首页数据失败: {}", e.getMessage(), e);
-            throw new RuntimeException("获取首页数据失败");
+            log.error("获取推荐内容失败: {}", e.getMessage(), e);
+            throw new RuntimeException("获取推荐内容失败");
         }
     }
 
@@ -105,6 +91,7 @@ public class HomeServiceImpl implements HomeService {
         log.info("用户 {} 刷新推荐内容, 页码: {}, 条数: {}", userId, pageNum, pageSize);
 
         try {
+            // 实现获取推荐内容的逻辑
             int offset = (pageNum - 1) * pageSize;
             var contents = homeContentMapper.findRecommendedContentsByPage(offset, pageSize);
 
@@ -112,7 +99,8 @@ public class HomeServiceImpl implements HomeService {
             result.setTotal(homeContentMapper.countPublishedContents());
             result.setPageNum(pageNum);
             result.setPageSize(pageSize);
-            result.setList(contents.stream().map(content -> {
+
+            List<RecommendRefreshDTO.ContentItem> contentList = contents.stream().map(content -> {
                 RecommendRefreshDTO.ContentItem item = new RecommendRefreshDTO.ContentItem();
                 item.setId(content.getId());
                 item.setTitle(content.getTitle());
@@ -120,17 +108,93 @@ public class HomeServiceImpl implements HomeService {
                 item.setAuthor(content.getAuthorName());
                 item.setLikeCount(content.getLikeCount() != null ? content.getLikeCount() : 0);
                 item.setCollectCount(content.getCollectCount() != null ? content.getCollectCount() : 0);
-                item.setPublishTime(content.getCreatedAt() != null ? content.getCreatedAt().toString() : "2025-05-18 10:00:00");
+                item.setPublishTime(content.getCreatedAt() != null ? content.getCreatedAt().toString() : LocalDateTime.now().toString());
                 item.setLink("/api/v1/content/" + content.getId());
                 return item;
-            }).collect(Collectors.toList()));
+            }).collect(Collectors.toList());
 
+            result.setList(contentList);
             return result;
         } catch (Exception e) {
             log.error("刷新推荐内容失败: {}", e.getMessage(), e);
             throw new RuntimeException("刷新推荐内容失败");
         }
     }
+
+    private String getUserIdentity(String userId) {
+        // 实现获取用户身份的逻辑
+        return "student"; // 默认身份
+    }
+
+    private List<HomeDTO.Carousel> getCarouselData() {
+        // 实现获取轮播图的逻辑
+        return Arrays.asList(
+                createCarousel("101", "春招面试强化营",
+                        "https://jobhub.com/carousel/101.jpg",
+                        "结构化回答/案例拆解/模拟面试", "/api/v1/activity/101")
+        );
+    }
+
+    private List<HomeDTO.HotActivity> getHotActivities() {
+        // 实现获取热门活动的逻辑
+        return Arrays.asList(
+                createHotActivity("101", "春招面试强化营",
+                        "2025-05-25 19:00-21:00", 580, "/api/v1/activity/101")
+        );
+    }
+
+    private RecommendRefreshDTO getRecommendedContent(Integer pageNum, Integer pageSize) {
+        RecommendRefreshDTO result = new RecommendRefreshDTO();
+        result.setTotal(40L);
+        result.setPageNum(pageNum);
+        result.setPageSize(pageSize);
+
+        // 实现获取推荐内容的逻辑
+        List<RecommendRefreshDTO.ContentItem> contentList = Arrays.asList(
+                createContentItem("6002", "0-1写出亮点简历（学生版）", "article",
+                        "求职导师A", 320, 156, "2025-05-18 10:00:00", "/api/v1/content/6002")
+        );
+        result.setList(contentList);
+
+        return result;
+    }
+
+    // 辅助方法
+    private HomeDTO.Carousel createCarousel(String id, String title, String imageUrl, String desc, String link) {
+        HomeDTO.Carousel carousel = new HomeDTO.Carousel();
+        carousel.setId(id);
+        carousel.setTitle(title);
+        carousel.setImageUrl(imageUrl);
+        carousel.setDesc(desc);
+        carousel.setLink(link);
+        return carousel;
+    }
+
+    private HomeDTO.HotActivity createHotActivity(String id, String title, String time, Integer participantCount, String link) {
+        HomeDTO.HotActivity activity = new HomeDTO.HotActivity();
+        activity.setId(id);
+        activity.setTitle(title);
+        activity.setTime(time);
+        activity.setParticipantCount(participantCount);
+        activity.setLink(link);
+        return activity;
+    }
+
+    private RecommendRefreshDTO.ContentItem createContentItem(String id, String title, String type,
+                                                              String author, Integer likeCount, Integer collectCount,
+                                                              String publishTime, String link) {
+        RecommendRefreshDTO.ContentItem item = new RecommendRefreshDTO.ContentItem();
+        item.setId(id);
+        item.setTitle(title);
+        item.setType(type);
+        item.setAuthor(author);
+        item.setLikeCount(likeCount);
+        item.setCollectCount(collectCount);
+        item.setPublishTime(publishTime);
+        item.setLink(link);
+        return item;
+    }
+
 
     @Override
     public HomeDTO selectIdentity(String identityType, String userId) {
@@ -258,7 +322,6 @@ public class HomeServiceImpl implements HomeService {
             throw new RuntimeException("刷新推荐内容失败");
         }
     }
-
     private HomeDTO.Activity createActivity(String activityId, String title, String time) {
         HomeDTO.Activity activity = new HomeDTO.Activity();
         activity.setActivityId(activityId);
