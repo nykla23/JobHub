@@ -9,7 +9,7 @@
 - **MyBatisPlus配置**：在 `config` 包中添加 `MyBatisPlusConfig` 配置类
 - **依赖调整**：
   - `pom.xml` 中完善了 Lombok 插件配置，指定版本为 `1.18.30`
-  - 这是您在 `pom.xml` 文件中修改的 `maven-compiler-plugin` 配置部分的完整代码：
+  - `pom.xml` 文件中修改的 `maven-compiler-plugin` 配置部分的完整代码：
 
 ```xml
 <plugin>
@@ -29,10 +29,9 @@
 
 **注意：**
 1. 这个配置应该放在 `<build>` → `<plugins>` 部分
-2. 如果您使用的是 Spring Boot 项目，通常已经自带了 Lombok 依赖，但指定 `annotationProcessorPaths` 有助于确保 Lombok 注解处理器正确工作
-3. 如果您的项目结构中没有这个插件配置，可能需要添加完整的 `<build>` 部分
-
-如果您需要完整的 `pom.xml` 结构示例，或者遇到了配置问题，请告诉我，我可以提供更详细的帮助。
+2. 如果使用的是 Spring Boot 项目，通常已经自带了 Lombok 依赖，但指定 `annotationProcessorPaths` 有助于确保 Lombok 注解处理器正确工作
+3. 如果项目结构中没有这个插件配置，可能需要添加完整的 `<build>` 部分
+4. 
   - `application.yml` 中设置 `spring.datasource.jpa.hibernate.ddl-auto: update`，启用表结构自动更新
 
 ### 2. 模块结构搭建
