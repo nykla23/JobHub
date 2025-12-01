@@ -1,6 +1,6 @@
 package com.cyd.xs.service;
 
-import com.cyd.xs.dto.user.Group.*;
+import com.cyd.xs.dto.Group.*;
 
 public interface GroupService {
 

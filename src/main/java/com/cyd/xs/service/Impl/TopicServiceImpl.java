@@ -1,13 +1,13 @@
 package com.cyd.xs.service.Impl;
 
-import com.cyd.xs.dto.user.ChatRoom.ChatRoomDTO;
-import com.cyd.xs.dto.user.ChatRoom.ChatRoomDetailDTO;
-import com.cyd.xs.dto.user.ChatRoom.ChatRoomMessageDTO;
-import com.cyd.xs.dto.user.Topic.*;
+import com.cyd.xs.dto.ChatRoom.ChatRoomDTO;
+import com.cyd.xs.dto.ChatRoom.ChatRoomDetailDTO;
+import com.cyd.xs.dto.ChatRoom.ChatRoomMessageDTO;
+import com.cyd.xs.dto.Topic.*;
 import com.cyd.xs.entity.User.Topic.Topic;
 import com.cyd.xs.entity.User.Topic.TopicPost;
-import com.cyd.xs.mapper.TopicMapper;
-import com.cyd.xs.mapper.TopicPostMapper;
+import com.cyd.xs.mapper.Topic.TopicMapper;
+import com.cyd.xs.mapper.Topic.TopicPostMapper;
 import com.cyd.xs.service.TopicService;
 import com.cyd.xs.util.IDGenerator;
 import lombok.RequiredArgsConstructor;

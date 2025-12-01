@@ -1,8 +1,8 @@
 package com.cyd.xs.service;
 
-import com.cyd.xs.dto.user.Home.HomeDTO;
-import com.cyd.xs.dto.user.Home.RecommendRefreshDTO;
-import com.cyd.xs.dto.user.Search.SearchDTO;
+import com.cyd.xs.dto.Home.HomeDTO;
+import com.cyd.xs.dto.Home.RecommendRefreshDTO;
+import com.cyd.xs.dto.Search.SearchDTO;
 
 import java.util.List;
 

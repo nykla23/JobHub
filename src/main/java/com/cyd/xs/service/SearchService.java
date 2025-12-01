@@ -1,6 +1,6 @@
 package com.cyd.xs.service;
 
-import com.cyd.xs.dto.user.Search.SearchDTO;
+import com.cyd.xs.dto.Search.SearchDTO;
 
 public interface SearchService {
     SearchDTO getSearchHistoryAndHot(String userId);

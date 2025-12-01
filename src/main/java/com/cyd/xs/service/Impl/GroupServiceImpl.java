@@ -1,6 +1,6 @@
 package com.cyd.xs.service.Impl;
 
-import com.cyd.xs.dto.user.Group.*;
+import com.cyd.xs.dto.Group.*;
 import com.cyd.xs.entity.User.Group.*;
 import com.cyd.xs.mapper.groups.*;
 import com.cyd.xs.service.GroupService;
@@ -8,7 +8,6 @@ import com.cyd.xs.util.IDGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
