@@ -10,11 +10,14 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/search")
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class SearchController {
 
     private final SearchService searchService;
 
+    public SearchController(SearchService searchService) {
+        this.searchService = searchService;
+    }
     /**
      * 获取搜索历史与热门搜索
      * 文档路径：GET /api/v1/search/history-hot

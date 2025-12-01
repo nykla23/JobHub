@@ -219,7 +219,7 @@ public class HomeServiceImpl implements HomeService {
             List<Topic> topics = topicMapper.findTopicsByCondition(null, "hot", 0, 5);
             homeDTO.setCommunityTopics(topics.stream().map(topic -> {
                 HomeDTO.CommunityTopic ct = new HomeDTO.CommunityTopic();
-                ct.setTopicId(topic.getId());
+                ct.setTopicId(String.valueOf(topic.getId()));
                 ct.setTitle(topic.getTitle());
                 ct.setParticipantCount(topic.getParticipantCount());
                 return ct;
@@ -253,7 +253,7 @@ public class HomeServiceImpl implements HomeService {
                 List<Topic> topics = topicMapper.findTopicsByCondition(null, "comprehensive", 0, 10);
                 searchDTO.setTopic(topics.stream().map(topic -> {
                     SearchDTO.TopicResult tr = new SearchDTO.TopicResult();
-                    tr.setTopicId(topic.getId());
+                    tr.setTopicId(Long.valueOf(topic.getId()));
                     tr.setTitle(topic.getTitle());
                     tr.setParticipantCount(topic.getParticipantCount());
                     return tr;
@@ -264,7 +264,7 @@ public class HomeServiceImpl implements HomeService {
                 List<HomeContent> contents = homeContentMapper.findRecentContents(10);
                 searchDTO.setContent(contents.stream().map(content -> {
                     SearchDTO.ContentResult cr = new SearchDTO.ContentResult();
-                    cr.setContentId(content.getId());
+                    cr.setContentId(Long.valueOf(content.getId()));
                     cr.setTitle(content.getTitle());
                     cr.setAuthor(content.getAuthorName());
                     return cr;

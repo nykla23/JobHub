@@ -2,7 +2,6 @@ package com.cyd.xs.service.Impl;
 
 import com.cyd.xs.dto.user.Group.*;
 import com.cyd.xs.entity.User.Group.*;
-import com.cyd.xs.mapper.*;
 import com.cyd.xs.mapper.groups.*;
 import com.cyd.xs.service.GroupService;
 import com.cyd.xs.util.IDGenerator;
@@ -10,6 +9,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,10 +19,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GroupServiceImpl implements GroupService {
+
+    private static final Logger log = LoggerFactory.getLogger(GroupServiceImpl.class);
 
     private final GroupMapper groupMapper;
     private final GroupMemberMapper groupMemberMapper;

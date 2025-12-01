@@ -10,11 +10,14 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/group")
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class GroupController {
 
     private final GroupService groupService;
 
+    public GroupController(GroupService groupService) {
+        this.groupService = groupService;
+    }
     /**
      * 获取小组列表
      * 文档路径：GET /api/v1/group/list

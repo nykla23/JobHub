@@ -12,11 +12,14 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/home")
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class HomeController {
 
     private final HomeService homeService;
 
+    public HomeController(HomeService homeService) {
+        this.homeService = homeService;
+    }
 
     /**
      * 获取首页数据（含热门活动、推荐内容）

@@ -16,6 +16,12 @@ public class SearchDTO {
     private List<String> searchHistory;  // 个人搜索历史
     private List<String> hotSearch;      // 热门搜索
 
+    // 新增字段 - 修复报错
+    private List<TopicResult> topic;           // 话题搜索结果
+    private List<ContentResult> content;       // 内容搜索结果
+    private List<String> hotKeywords;          // 热门关键词
+    private List<String> historyKeywords;      // 历史搜索关键词
+
     // 话题搜索结果
     @Data
     public static class TopicResult {
@@ -26,6 +32,17 @@ public class SearchDTO {
         private List<String> tags;
         private Integer participantCount;
         private String link;
+
+        // 新增字段 - 修复报错
+        private String topicId;  // 用于 setTopicId 方法
+
+        public Long getTopicId() {
+            return topicId != null ? Long.valueOf(topicId) : null;
+        }
+
+        public void setTopicId(Long topicId) {
+            this.topicId = topicId != null ? topicId.toString() : null;
+        }
     }
 
     // 内容搜索结果
@@ -35,6 +52,17 @@ public class SearchDTO {
         private String title;
         private String author;
         private String link;
+
+        // 新增字段 - 修复报错
+        private String contentId;  // 用于 setContentId 方法
+
+        public Long getContentId() {
+            return contentId != null ? Long.valueOf(contentId) : null;
+        }
+
+        public void setContentId(Long contentId) {
+            this.contentId = contentId != null ? contentId.toString() : null;
+        }
     }
 
     // 圈子搜索结果
@@ -75,5 +103,101 @@ public class SearchDTO {
         private String link;
     }
 
+    // 原有的 getter 和 setter 保持不变
+    public String getKeyword() {
+        return keyword;
+    }
 
+    public void setKeyword(String keyword) {
+        this.keyword = keyword;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public Long getTotal() {
+        return total;
+    }
+
+    public void setTotal(Long total) {
+        this.total = total;
+    }
+
+    public Integer getPageNum() {
+        return pageNum;
+    }
+
+    public void setPageNum(Integer pageNum) {
+        this.pageNum = pageNum;
+    }
+
+    public Integer getPageSize() {
+        return pageSize;
+    }
+
+    public void setPageSize(Integer pageSize) {
+        this.pageSize = pageSize;
+    }
+
+    public List<Object> getList() {
+        return list;
+    }
+
+    public void setList(List<Object> list) {
+        this.list = list;
+    }
+
+    public List<String> getSearchHistory() {
+        return searchHistory;
+    }
+
+    public void setSearchHistory(List<String> searchHistory) {
+        this.searchHistory = searchHistory;
+    }
+
+    public List<String> getHotSearch() {
+        return hotSearch;
+    }
+
+    public void setHotSearch(List<String> hotSearch) {
+        this.hotSearch = hotSearch;
+    }
+
+    // 新增的 getter 和 setter
+    public List<TopicResult> getTopic() {
+        return topic;
+    }
+
+    public void setTopic(List<TopicResult> topic) {
+        this.topic = topic;
+    }
+
+    public List<ContentResult> getContent() {
+        return content;
+    }
+
+    public void setContent(List<ContentResult> content) {
+        this.content = content;
+    }
+
+    public List<String> getHotKeywords() {
+        return hotKeywords;
+    }
+
+    public void setHotKeywords(List<String> hotKeywords) {
+        this.hotKeywords = hotKeywords;
+    }
+
+    public List<String> getHistoryKeywords() {
+        return historyKeywords;
+    }
+
+    public void setHistoryKeywords(List<String> historyKeywords) {
+        this.historyKeywords = historyKeywords;
+    }
 }

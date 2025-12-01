@@ -17,11 +17,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class TopicController {
 
     private final TopicService topicService;
 
+    public TopicController(TopicService topicService) {
+        this.topicService = topicService;
+    }
     /**
      * 获取话题列表
      * 文档路径：GET /api/v1/topic/list
