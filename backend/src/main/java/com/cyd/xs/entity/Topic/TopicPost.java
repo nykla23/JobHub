@@ -1,58 +1,43 @@
 package com.cyd.xs.entity.Topic;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
-@Entity
-@Table(name = "topic_posts")
+@TableName("topic_posts")
 public class TopicPost {
-    @Id
+
+    @TableId(type = IdType.AUTO)
     private Long id;
 
-    @Column(nullable = false)
+    @TableField("topic_id")
     private Long topicId;
 
-    @Column(nullable = false)
+    @TableField("user_id")
     private Long userId;
 
+    @TableField("user_name")
     private String userName;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(columnDefinition = "JSON")
     private String images;
-
-    @Column(columnDefinition = "JSON")
     private String tags;
 
+    @TableField("like_count")
     private Integer likeCount = 0;
+
+    @TableField("comment_count")
     private Integer commentCount = 0;
+
+    @TableField("collect_count")
     private Integer collectCount = 0;
-    private LocalDateTime createdAt;
 
-    public TopicPost() {
-    }
+    @TableField("created_at")
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    public TopicPost(Long id, Long topicId, Long userId, String userName, String content, String images, String tags, Integer likeCount, Integer commentCount, Integer collectCount, LocalDateTime createdAt) {
-        this.id = id;
-        this.topicId = topicId;
-        this.userId = userId;
-        this.userName = userName;
-        this.content = content;
-        this.images = images;
-        this.tags = tags;
-        this.likeCount = likeCount;
-        this.commentCount = commentCount;
-        this.collectCount = collectCount;
-        this.createdAt = createdAt;
-    }
-
-
+    private String status = "PUBLISHED";
+    private Integer deleted = 0;
 }

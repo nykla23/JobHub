@@ -2,15 +2,11 @@
   <div class="page">
     <header class="page-header">
       <div>
-        <p class="eyebrow">兴趣圈子 · {{ identityTag || '通用' }}</p>
+        <p class="eyebrow">兴趣圈子</p>
         <h1>{{ headline }}</h1>
       </div>
       <div class="tools">
-        <div class="search-group">
-          <input v-model.trim="keyword" type="text" placeholder="搜索小组名称/标签" class="search-input">
-          <button class="search-btn" @click="doSearch">搜索</button>
-        </div>
-        <button class="primary-btn create-btn">+ 创建小组</button>
+        
       </div>
     </header>
 
@@ -50,11 +46,23 @@ import EmptyState from '@/components/state/EmptyState.vue';
 import { fetchGroupList } from '@/api/services/group';
 
 export default {
+  created() {
+  this.loadCircles();
+},
   name: 'Circles',
   components: { CircleCard, SkeletonBlock, EmptyState },
   data() {
     return {
-      tags: ['应届生专属', '职场新人', '行业交流', '考公/考编', '求职专项'],
+      tags: [
+  '实习与校招',
+  '求职与跳槽',
+  '考公/考编',
+  '职场新人',
+  '职场成长',
+  '行业交流',
+  '管理与进阶',
+  '职场心理'
+],
       loading: true,
       circles: [],
       keyword: '',
@@ -62,27 +70,9 @@ export default {
     };
   },
   computed: {
-    identityTag() {
-      return this.$store.state.identityTag;
-    },
-    headline() {
-      const map = {
-        学生: '秋招/实习互助小组',
-        职场菜鸟: '入职适应与成长互助圈',
-        专家: '专家答疑/创作者圈',
-        职场老手: '行业交流与管理进阶圈'
-      };
-      return map[this.identityTag] || '按群体与行业划分的小组';
-    },
     displayTags() {
-      const map = {
-        学生: ['应届生专属', '实习互助', '校招打卡', 'offer选择', '考研/考公'],
-        职场菜鸟: ['职场新人', '试用期', '沟通反馈', '效率工具', '转正'],
-        专家: ['专家创作', '答疑主持', '榜单交流', '私信咨询', '创作工具'],
-        职场老手: ['行业交流', '管理进阶', '跳槽', '职场心理', '招聘/内推']
-      };
-      return map[this.identityTag] || this.tags;
-    },
+  return this.tags;
+},
     displayCircles() {
       const kw = this.keyword.trim();
       const tag = this.selectedTag;
@@ -103,14 +93,6 @@ export default {
       );
     }
   },
-  watch: {
-    identityTag: {
-      immediate: true,
-      handler() {
-        this.loadCircles();
-      }
-    }
-  },
   methods: {
     doSearch() {
       this.keyword = this.keyword.trim();
@@ -124,11 +106,13 @@ export default {
       this.loading = true;
       try {
         const params = {
-          keyword: this.keyword || undefined,
-          tag: this.selectedTag || this.identityTag || undefined,
-          pageNum: 1,
-          pageSize: 20
-        };
+  keyword: this.keyword || undefined,
+  pageNum: 1,
+  pageSize: 20
+};
+if (this.selectedTag) {
+  params.tag = this.selectedTag;
+}
         const res = await fetchGroupList(params);
         this.circles = (res.list || []).map((item) => ({
           id: item.id,

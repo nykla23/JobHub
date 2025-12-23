@@ -61,7 +61,20 @@ export const saveProfile = async (body) => {
 
   return unwrap(payload);
 };
+export const saveIdentityTag = async (identityTag) => {
+  const payload = await http.put(
+    '/api/user/profile/identity',
+    null,
+    { params: { identityTag } }
+  );
+  return unwrap(payload);
+};
 
+// ===== 新增：获取身份标签 =====
+export const fetchIdentityTag = async () => {
+  const payload = await http.get('/api/user/profile/identity');
+  return unwrap(payload);
+};
 // ===============================
 // 以下所有接口保持原样
 // ===============================

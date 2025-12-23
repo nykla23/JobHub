@@ -7,13 +7,19 @@ import com.cyd.xs.dto.ChatRoom.ChatRoomDTO;
 import com.cyd.xs.dto.ChatRoom.ChatRoomDetailDTO;
 import com.cyd.xs.dto.ChatRoom.ChatRoomMessageDTO;
 import com.cyd.xs.dto.ChatRoom.EssenceNoteDTO;
-import com.cyd.xs.dto.Topic.*;
+import com.cyd.xs.dto.Topic.TopicDTO;
+import com.cyd.xs.dto.Topic.TopicCommentDTO;
+import com.cyd.xs.dto.Topic.TopicCommentLikeDTO;
+import com.cyd.xs.dto.Topic.TopicCommentRequest;
+import com.cyd.xs.dto.Topic.vo.TopicDetailVO;
+
 import com.cyd.xs.service.TopicService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.cyd.xs.dto.Topic.vo.TopicDetailVO;
 
 
 @Slf4j
@@ -51,8 +57,9 @@ public class TopicController {
     }
 
     /**
-     * 获取话题详情
+     * 获取话题详情（包含评论分页）
      * 文档路径：GET /api/v1/topic/{id}
+     * ✅ 允许未登录访问
      */
     @GetMapping("/topic/{id}")
     public ResponseEntity<Result<?>> getTopicDetail(
@@ -61,31 +68,20 @@ public class TopicController {
             @RequestParam(defaultValue = "10") Integer pageSize,
             Authentication authentication) {
         try {
-            // 允许未登录用户查看详情
-            Long userId = getUserIdFromAuth(authentication);
-
-            // 方法1：使用 SecurityUtils.getUserId()
-            userId = SecurityUtils.getUserId();
-
-            // 方法2：或者直接从 Authentication 中获取（更直接）
-            if (authentication != null && authentication.isAuthenticated()) {
-                Object principal = authentication.getPrincipal();
-                if (principal instanceof CustomUserPrincipal) {
-                    userId = ((CustomUserPrincipal) principal).getUserId();
-                    log.debug("从CustomUserPrincipal获取userId: {}", userId);
-                } else {
-                    log.error("Principal类型错误: {}", principal.getClass().getName());
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                            .body(Result.error("用户信息异常"));
-                }
-            } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Result.error("请先登录"));
+            // ✅ 未登录允许查看：userId 可为 null
+            Long userId = null;
+            if (authentication != null && authentication.isAuthenticated()
+                    && authentication.getPrincipal() instanceof CustomUserPrincipal p) {
+                userId = p.getUserId();
             }
 
-            TopicDetailDTO result = topicService.getTopicDetail(id, pageNum, pageSize, userId);
-            return ResponseEntity.ok(Result.success("获取成功", result));
+            // ✅ 调用新 VO 版 service（你需要在 TopicService/Impl 里加这个重载或替换原方法）
+            TopicDetailVO detail = topicService.getTopicDetail(id, pageNum, pageSize);
+
+            // ✅ 按你现有 Result 的签名返回（重点看这里）
+            return ResponseEntity.ok(Result.success("获取成功", detail));
         } catch (Exception e) {
+            log.error("获取话题详情失败", e);
             return ResponseEntity.badRequest().body(Result.error("获取失败"));
         }
     }
@@ -125,11 +121,16 @@ public class TopicController {
             TopicCommentDTO result = topicService.publishTopicComment(id, userId, request);
             return ResponseEntity.ok(Result.success("评论提交成功，待审核", result));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Result.error("评论提交失败"));
+            log.error("评论提交异常，topicId={}, request={}", id, request, e);
+
+            return ResponseEntity.badRequest().body(
+                    Result.error(
+                            e.getClass().getSimpleName() + ": " +
+                                    String.valueOf(e.getMessage())
+                    )
+            );
         }
     }
-
-
 
     /**
      * 点赞/取消点赞话题评论
@@ -165,7 +166,9 @@ public class TopicController {
             String message = isLike ? "点赞成功" : "取消点赞成功";
             return ResponseEntity.ok(Result.success(message, result));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Result.error("操作失败"));
+            log.error("点赞失败", e);
+            return ResponseEntity.badRequest()
+                    .body(Result.error(e.getMessage()));
         }
     }
 

@@ -29,11 +29,17 @@ public interface TopicMapper extends BaseMapper<Topic> {
     Long countSearchTopics(@Param("keyword") String keyword);
 
     @Select("<script>" +
-            "SELECT * FROM topics WHERE 1=1" +
-            "<if test='tag != null'> AND tag = #{tag}</if>" +
-            "<if test='level != null'> AND level = #{level}</if>" +
-            "<if test='sort == \"hot\"'> ORDER BY interactive_count DESC</if>" +
-            "<if test='sort == \"time\"'> ORDER BY created_at DESC</if>" +
+            "SELECT * FROM topics WHERE deleted = 0 AND status = 'PUBLISHED'" +
+            "<if test='tag != null and tag != \"\"'>" +
+            " AND FIND_IN_SET(#{tag}, tag)" +
+            "</if>" +
+            "<if test='level != null and level != \"\"'>" +
+            " AND level = #{level}" +
+            "</if>" +
+            "<choose>" +
+            "  <when test='sort == \"hot\"'> ORDER BY interactive_count DESC</when>" +
+            "  <otherwise> ORDER BY created_at DESC</otherwise>" +
+            "</choose>" +
             " LIMIT #{pageSize} OFFSET #{offset}" +
             "</script>")
     List<Topic> findTopicsByCondition(@Param("tag") String tag,
@@ -43,14 +49,16 @@ public interface TopicMapper extends BaseMapper<Topic> {
                                       @Param("pageSize") int pageSize);
 
     @Select("<script>" +
-            "SELECT COUNT(*) FROM topics WHERE 1=1" +
-            "<if test='tag != null'> AND tag = #{tag}</if>" +
-            "<if test='level != null'> AND level = #{level}</if>" +
+            "SELECT COUNT(*) FROM topics WHERE deleted = 0 AND status = 'PUBLISHED'" +
+            "<if test='tag != null and tag != \"\"'>" +
+            " AND FIND_IN_SET(#{tag}, tag)" +
+            "</if>" +
+            "<if test='level != null and level != \"\"'>" +
+            " AND level = #{level}" +
+            "</if>" +
             "</script>")
-    Long countByCondition(@Param("tag") String tag, @Param("level") String level);
-
-    @Select("SELECT COUNT(*) FROM topics WHERE tag = #{tag}")
-    long countByTag(String tag);
+    Long countByCondition(@Param("tag") String tag,
+                          @Param("level") String level);
 
     /**
      * 更新话题参与人数
@@ -69,6 +77,41 @@ public interface TopicMapper extends BaseMapper<Topic> {
      */
     @Update("UPDATE topics SET latest_reply_time = #{latestReplyTime} WHERE id = #{id}")
     int updateLatestReplyTime(@Param("id") Long id, @Param("latestReplyTime") LocalDateTime latestReplyTime);
+    /**
+     * 首页推荐：根据多个标签推荐话题
+     */
+    @Select("<script>" +
+            "SELECT * FROM topics " +
+            "WHERE deleted = 0 AND status = 'PUBLISHED' " +
+            "<if test='tags != null and tags.size() > 0'>" +
+            " AND ( " +
+            "   <foreach collection='tags' item='tag' separator=' OR '> " +
+            "       FIND_IN_SET(#{tag}, tag) " +
+            "   </foreach> " +
+            " ) " +
+            "</if> " +
+            "ORDER BY interactive_count DESC, latest_reply_time DESC " +
+            "LIMIT #{limit}" +
+            "</script>")
+    List<Topic> findRecommendedTopicsByTags(
+            @Param("tags") List<String> tags,
+            @Param("limit") Integer limit
+    );
+    @Select("<script>" +
+            "SELECT * FROM topics " +
+            "WHERE deleted = 0 AND status = 'PUBLISHED' " +
+            "<if test='tags != null and tags.size() > 0'>" +
+            " AND ( " +
+            "   <foreach collection='tags' item='tag' separator=' OR '> " +
+            "       FIND_IN_SET(#{tag}, tag) " +
+            "   </foreach> " +
+            " ) " +
+            "</if>" +
+            "ORDER BY interactive_count DESC, latest_reply_time DESC" +
+            "</script>")
+    List<Topic> findAllRecommendedTopicsByTags(
+            @Param("tags") List<String> tags
+    );
 
 }
 

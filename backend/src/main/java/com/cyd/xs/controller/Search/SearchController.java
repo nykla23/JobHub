@@ -40,15 +40,14 @@ public class SearchController {
      */
     @GetMapping("/history")
     public ResponseEntity<Result<?>> appendSearchHistory(
-            @RequestParam String keyword,
+            @RequestParam(required = false) String keyword,
             Authentication authentication) {
 
         try {
             String userId = getUserIdFromAuthentication(authentication);
 
-            if (keyword == null || keyword.trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(Result.error("关键词不能为空"));
+            if (keyword == null || keyword.isBlank()) {
+                return ResponseEntity.ok(Result.success("忽略空关键词"));
             }
 
             // 小项目：先不真正入库，避免再改 Service
@@ -86,7 +85,7 @@ public class SearchController {
      */
     @GetMapping("/result")
     public ResponseEntity<Result<?>> search(
-            @RequestParam String keyword,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String type,
             @RequestParam(required = false, defaultValue = "hot") String sort,
             @RequestParam(defaultValue = "1") Integer pageNum,

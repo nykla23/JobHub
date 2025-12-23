@@ -76,8 +76,13 @@ public class UserGroupServiceImpl extends ServiceImpl<UserGroupMapper, UserGroup
 
     @Override
     public List<Group> listDiscoverGroups(Integer pageNum, Integer pageSize) {
-        // 分页计算偏移量（pageNum从1开始）
         Integer offset = (pageNum - 1) * pageSize;
-        return groupMapper.listValidGroups(pageSize, offset);
+
+        return groupMapper.selectList(
+                Wrappers.<Group>lambdaQuery()
+                        .eq(Group::getStatus, "normal")
+                        .last("LIMIT " + pageSize + " OFFSET " + offset)
+        );
     }
+
 }

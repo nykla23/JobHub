@@ -96,7 +96,8 @@
               <div class="desc">{{ item.desc }}</div>
               <div class="meta">{{ item.meta || defaultMeta(item) }}</div>
             </div>
-            <button class="ghost-btn" @click="openLink(item.link)">查看</button>
+            <button class="ghost-btn" @click="openItem(item)">查看</button>
+
           </li>
         </ul>
       </template>
@@ -130,9 +131,7 @@ export default {
     return {
       typeOptions: [
         { label: '话题', value: 'topic' },
-        { label: '内容', value: 'content' },
         { label: '圈子', value: 'group' },
-        { label: '用户', value: 'user' },
         { label: '专家', value: 'expert' }
       ],
       sortOptions: [
@@ -206,6 +205,7 @@ export default {
         this.total = data.total || 0;
         this.pageNum = data.pageNum || this.pageNum;
         this.pageSize = data.pageSize || this.pageSize;
+        this.fetchMeta();
       } catch (error) {
         console.error('[search] 获取搜索结果失败', error);
         this.results = [];
@@ -219,7 +219,7 @@ export default {
         this.updateRoute({ page: 1, keyword: '' });
         return;
       }
-      await appendSearchHistory(this.localKeyword);
+      
       this.addSearchHistory(this.localKeyword);
       this.fetchMeta();
       this.updateRoute({ keyword: this.localKeyword, page: 1 });
@@ -264,14 +264,27 @@ export default {
       if (item.stats) return item.stats;
       return item.author ? `来自：${item.author}` : '平台推荐';
     },
-    openLink(link) {
-      if (!link) return;
-      if (link.startsWith('http') || link.startsWith('/api')) {
-        window.open(link, '_blank');
-        return;
-      }
-      this.$router.push(link);
-    }
+    openTopic(id) {
+    if (!id) return;
+
+    this.$router.push({
+      name: 'TopicDetail',
+      params: { id }
+    });
+  },
+  openItem(item) {
+  if (!item || !item.link) return;
+
+  // 外链 or API 链接
+  if (item.link.startsWith('http')) {
+    window.open(item.link, '_blank');
+    return;
+  }
+
+  // 内部路由
+  this.$router.push(item.link);
+}
+
   }
 };
 </script>

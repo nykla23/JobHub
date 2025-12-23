@@ -1,30 +1,27 @@
 package com.cyd.xs.entity.Topic;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
-@Entity
-@Table(name = "topics")
+@TableName("topics")
 public class Topic {
-    @Id
+
+    @TableId
     private Long id;
 
-    @Column(nullable = false)
     private String title;
+    private String level;
+    private String tag;
 
-    private String level; // "A"/"B"/"C"
-    private String tag; // professionalShare/firstIntern/graduateJob/newbiePitfall/offerChoice
-    private Integer participantCount = 0;
-    private Integer interactiveCount = 0;
+    private Integer participantCount;
+    private Integer interactiveCount;
+
     private LocalDateTime latestReplyTime;
     private String guideText;
     private String host;
     private LocalDateTime createdAt;
-
-   }
+}

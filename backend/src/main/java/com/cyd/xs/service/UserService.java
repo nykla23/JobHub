@@ -8,13 +8,16 @@ import com.cyd.xs.dto.profile.VO.UserPrivacyVO;
 import com.cyd.xs.dto.profile.VO.UserProfileVO;
 import com.cyd.xs.dto.user.*;
 import com.cyd.xs.entity.User.User;
-
+import java.util.Map;
+import java.util.List;
 public interface UserService extends IService<User> {
 
     // ===============================
     // 原有方法（保持不动）
     // ===============================
 
+    void updateIdentityTag(Long userId, String identityTag);
+    String getIdentityTag(Long userId);
     Long register(UserRegisterDTO registerDTO);
 
     void updateCareerStage(Long userId, String careerStage);
@@ -51,7 +54,9 @@ public interface UserService extends IService<User> {
 
     /** 通过 userId 获取隐私设置 */
     UserPrivacyVO getPrivacySettingsByUserId(Long userId);
-
+    Map<String, Object> getHomeOverview(String identity);
     /** 通过 userId 更新隐私设置 */
     void updatePrivacySettingsByUserId(Long userId, UserPrivacyUpdateDTO updateDTO);
+    Long getUserIdByUsername(String username);
+
 }

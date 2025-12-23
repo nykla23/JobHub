@@ -97,7 +97,8 @@ export default {
           id: info.id,
           title: info.name || '小组名称',
           badge: info.tags?.[0] || info.activityType || '兴趣圈',
-          desc: info.intro || ''
+          desc: info.intro || '',
+          meta: info.memberCount ?? 0 
         };
         this.joined = Boolean(info.isJoined);
         this.posts = (data.groupDynamic?.list || []).map((item) => ({

@@ -94,36 +94,25 @@ public class GroupController {
     public ResponseEntity<Result<?>> getGroupDetail(
             @PathVariable("id") Long id,
             Authentication authentication) {
-        try {
-            // 允许未登录用户查看详情
-            Long userId = getUserIdFromAuth(authentication);
 
-            // 方法1：使用 SecurityUtils.getUserId()
-            userId = SecurityUtils.getUserId();
+        // ✅ 允许未登录
+        Long userId = null;
 
-            // 方法2：或者直接从 Authentication 中获取（更直接）
-            if (authentication != null && authentication.isAuthenticated()) {
-                Object principal = authentication.getPrincipal();
-                if (principal instanceof CustomUserPrincipal) {
-                    userId = ((CustomUserPrincipal) principal).getUserId();
-                    log.debug("从CustomUserPrincipal获取userId: {}", userId);
-                } else {
-                    log.error("Principal类型错误: {}", principal.getClass().getName());
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                            .body(Result.error("用户信息异常"));
-                }
-            } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Result.error("请先登录"));
-            }
-
-            GroupDetailDTO result = groupService.getGroupDetail(id, userId != null ? userId : 0L);
-            return ResponseEntity.ok(Result.success("获取成功", result));
-        } catch (Exception e) {
-            log.error("获取小组详情失败: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest().body(Result.error("获取失败: " + e.getMessage()));
+        if (authentication != null && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof CustomUserPrincipal) {
+            userId = ((CustomUserPrincipal) authentication.getPrincipal()).getUserId();
+            log.debug("当前登录用户 userId={}", userId);
         }
+
+        // ❗ 不要 try-catch，让异常直接抛出去
+        GroupDetailDTO result = groupService.getGroupDetail(
+                id,
+                userId == null ? 0L : userId
+        );
+
+        return ResponseEntity.ok(Result.success("获取成功", result));
     }
+
 
     /**
      * 加入/退出小组

@@ -4,7 +4,15 @@ import com.cyd.xs.dto.ChatRoom.ChatRoomDTO;
 import com.cyd.xs.dto.ChatRoom.ChatRoomDetailDTO;
 import com.cyd.xs.dto.ChatRoom.ChatRoomMessageDTO;
 import com.cyd.xs.dto.ChatRoom.EssenceNoteDTO;
-import com.cyd.xs.dto.Topic.*;
+import com.cyd.xs.dto.Topic.TopicDTO;
+import com.cyd.xs.dto.Topic.TopicCommentDTO;
+import com.cyd.xs.dto.Topic.TopicCommentLikeDTO;
+import com.cyd.xs.dto.Topic.TopicCommentRequest;
+import com.cyd.xs.dto.Topic.vo.TopicDetailVO;
+import com.cyd.xs.dto.Topic.vo.TopicInfoVO;
+import com.cyd.xs.dto.Topic.vo.CommentPageVO;
+import com.cyd.xs.dto.Topic.vo.TopicPostVO;
+
 import com.cyd.xs.entity.Topic.ChatRoom.ChatRoom;
 import com.cyd.xs.entity.Topic.ChatRoom.ChatRoomMessage;
 import com.cyd.xs.entity.Topic.ChatRoom.EssenceNote;
@@ -34,7 +42,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import com.cyd.xs.dto.Topic.vo.TopicDetailVO;
+import com.cyd.xs.dto.Topic.vo.TopicInfoVO;
+import com.cyd.xs.dto.Topic.vo.CommentPageVO;
+import com.cyd.xs.dto.Topic.vo.TopicPostVO;
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -59,7 +70,7 @@ public class TopicServiceImpl implements TopicService {
             List<Topic> topics = topicMapper.findTopicsByCondition(tag, level, sort, offset, pageSize);
 
             TopicDTO result = new TopicDTO();
-            result.setTotal(topicMapper.countByTag(tag));
+            result.setTotal(topicMapper.countByCondition(tag, level));
             result.setPageNum(pageNum);
             result.setPageSize(pageSize);
 
@@ -67,7 +78,7 @@ public class TopicServiceImpl implements TopicService {
                 TopicDTO.TopicItem item = new TopicDTO.TopicItem();
                 item.setId(topic.getId());
                 item.setTitle(topic.getTitle());
-                item.setLevel("A"); // 默认等级，实际应从数据库获取
+                item.setLevel(topic.getLevel());
                 item.setTags(Collections.singletonList(topic.getTag())); // 假设tag字段存储单个标签
                 item.setParticipantCount(topic.getParticipantCount());
                 item.setInteractionCount(topic.getInteractiveCount());
@@ -85,123 +96,47 @@ public class TopicServiceImpl implements TopicService {
     }
 
     @Override
-    public TopicDetailDTO getTopicDetail(Long topicId, Integer pageNum, Integer pageSize, Long userId) {
-        log.info("获取话题详情: topicId={}, pageNum={}, pageSize={}, userId={}",
-                topicId, pageNum, pageSize, userId);
-
-        try {
-            Topic topic = topicMapper.selectById(topicId);
-            if (topic == null) {
-                throw new RuntimeException("话题不存在");
-            }
-
-            TopicDetailDTO result = new TopicDetailDTO();
-
-            // 设置话题信息
-            TopicDetailDTO.TopicInfo topicInfo = new TopicDetailDTO.TopicInfo();
-            topicInfo.setId(topic.getId());
-            topicInfo.setTitle(topic.getTitle());
-            topicInfo.setLevel("A"); // 默认等级
-            topicInfo.setTags(Collections.singletonList(topic.getTag()));
-            topicInfo.setParticipantCount(topic.getParticipantCount());
-            topicInfo.setInteractionCount(topic.getInteractiveCount());
-            topicInfo.setLatestReplyTime(topic.getLatestReplyTime());
-            topicInfo.setIntro(topic.getGuideText());
-            topicInfo.setHost("求职导师B"); // 默认主持人
-            topicInfo.setCreateTime(topic.getCreatedAt());
-            result.setTopicInfo(topicInfo);
-
-            // 设置评论列表
-            int offset = (pageNum - 1) * pageSize;
-            List<TopicPost> posts = topicPostMapper.findPostsByTopicId(topicId, offset, pageSize);
-
-            TopicDetailDTO.CommentList commentList = new TopicDetailDTO.CommentList();
-            commentList.setTotal((long) posts.size()); // 简化处理，实际应该查询总数
-            commentList.setPageNum(pageNum);
-            commentList.setPageSize(pageSize);
-
-            List<TopicDetailDTO.CommentItem> commentItems = posts.stream().map(post -> {
-                TopicDetailDTO.CommentItem item = new TopicDetailDTO.CommentItem();
-                item.setId(post.getId());
-                item.setUserId(post.getUserId());
-                item.setNickname(post.getUserName());
-                item.setAvatar("https://jobhub.com/avatar/default.png"); // 默认头像
-                item.setContent(post.getContent());
-                item.setPublishTime(post.getCreatedAt());
-                item.setLikeCount(post.getLikeCount());
-                item.setCollectCount(post.getCollectCount());
-                item.setReplyCount(post.getCommentCount());
-                return item;
-            }).collect(Collectors.toList());
-
-            commentList.setList(commentItems);
-            result.setComments(commentList);
-
-            return result;
-        } catch (Exception e) {
-            log.error("获取话题详情失败: {}", e.getMessage(), e);
-            throw new RuntimeException("获取话题详情失败");
-        }
-    }
-
-    @Override
     @Transactional
     public TopicCommentDTO publishTopicComment(Long topicId, Long userId, TopicCommentRequest request) {
-        log.info("用户 {} 在话题 {} 发布评论", userId, topicId);
 
-        try {
-
-            // 获取用户信息
-            User user = userMapper.findById(userId);
-            if (user == null) {
-                throw new RuntimeException("用户不存在");
-            }
-
-            TopicPost post = new TopicPost();
-            post.setId((IDGenerator.generateId()));
-            post.setTopicId(topicId);
-            post.setUserId(userId);
-
-            post.setContent(request.getContent());
-            post.setCreatedAt(LocalDateTime.now());
-            // 设置用户名
-            if (user.getUsername() != null) {
-                // 根据你的User实体字段名调整
-                post.setUserName(user.getUsername());
-            } else if (user.getDisplayName() != null) {
-                post.setUserName(user.getDisplayName());
-            }
-            // 处理图片（如果表有images字段）
-            if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
-                try {
-                    // 将图片URL列表转换为JSON字符串
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    String imagesJson = objectMapper.writeValueAsString(request.getImageUrls());
-                    // post.setImages(imagesJson); // 如果实体有images字段
-                } catch (JsonProcessingException e) {
-                    log.warn("图片URL序列化失败: {}", e.getMessage());
-                }
-            }
-
-            int result = topicPostMapper.insert(post);
-            if (result > 0) {
-                // 更新话题的互动次数和最新回复时间
-                topicMapper.incrementInteractiveCount(topicId);
-                topicMapper.updateLatestReplyTime(topicId, LocalDateTime.now());
-
-                TopicCommentDTO response = new TopicCommentDTO();
-                response.setCommentId(post.getId());
-                response.setStatus("pending"); // 默认待审核
-                response.setSubmitTime(LocalDateTime.now());
-                return response;
-            } else {
-                throw new RuntimeException("评论发布失败");
-            }
-        } catch (Exception e) {
-            log.error("发布评论失败: {}", e.getMessage(), e);
-            throw new RuntimeException("发布评论失败");
+        // 1. 校验用户
+        User user = userMapper.findById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
         }
+
+        // 2. 构建评论实体（⚠️ 不要手动 setId）
+        TopicPost post = new TopicPost();
+        post.setTopicId(topicId);
+        post.setUserId(userId);
+        post.setUserName(
+                user.getDisplayName() != null && !user.getDisplayName().isBlank()
+                        ? user.getDisplayName()
+                        : user.getUsername()
+        );
+        post.setContent(request.getContent());
+        post.setCreatedAt(LocalDateTime.now());
+
+        post.setLikeCount(0);
+        post.setCommentCount(0);
+        post.setCollectCount(0);
+
+        // 3. 插入
+        topicPostMapper.insert(post);
+
+        // 4. 更新话题统计
+        topicMapper.incrementInteractiveCount(topicId);
+        topicMapper.updateLatestReplyTime(topicId, LocalDateTime.now());
+
+        // 5. 返回
+        TopicCommentDTO dto = new TopicCommentDTO();
+        dto.setCommentId(post.getId()); // ✅ MyBatis 会回填
+        dto.setStatus("pending");
+        dto.setSubmitTime(LocalDateTime.now());
+        return dto;
     }
+
+
 
     @Override
     @Transactional
@@ -216,7 +151,7 @@ public class TopicServiceImpl implements TopicService {
             }
 
             // 检查点赞记录
-            boolean hasLiked = topicPostMapper.exists(commentId, userId);
+            boolean hasLiked = topicPostMapper.exists(commentId, userId)> 0;
 
             if (isLike) {
                 // 点赞
@@ -229,7 +164,7 @@ public class TopicServiceImpl implements TopicService {
                 like.setPostId(commentId);
                 like.setUserId(userId);
                 like.setCreatedAt(LocalDateTime.now());
-                topicPostMapper.insert(like);
+                topicPostMapper.insertLike(like);
 
                 // 更新评论点赞数
                 comment.setLikeCount(comment.getLikeCount() + 1);
@@ -644,6 +579,43 @@ public class TopicServiceImpl implements TopicService {
         // 可以是静态HTML文件路径，或者API接口路径
         return String.format("/api/v1/essence-note/%s", noteId);
     }
+    @Override
+    public TopicDetailVO getTopicDetail(Long topicId, Integer pageNum, Integer pageSize) {
 
+        // 1. 查询话题
+        Topic topic = topicMapper.selectById(topicId);
+        if (topic == null) {
+            throw new RuntimeException("话题不存在");
+        }
 
+        // 2. 查询评论
+        int offset = (pageNum - 1) * pageSize;
+        List<TopicPost> posts =
+                topicPostMapper.findPostsByTopicId(topicId, offset, pageSize);
+
+        // 3. Entity → VO（对齐前端字段）
+        List<TopicPostVO> postVOs = posts.stream().map(p -> {
+            TopicPostVO vo = new TopicPostVO();
+            vo.setId(p.getId());
+            vo.setContent(p.getContent());
+            vo.setNickname(p.getUserName());
+            vo.setPublishTime(p.getCreatedAt());
+            vo.setLikeCount(p.getLikeCount() == null ? 0 : p.getLikeCount());
+            return vo;
+        }).toList();
+
+        // 4. 组装分页
+        CommentPageVO commentPage = new CommentPageVO();
+        commentPage.setList(postVOs);
+        commentPage.setPageNum(pageNum);
+        commentPage.setPageSize(pageSize);
+        commentPage.setTotal((long) postVOs.size());
+
+        // 5. 组装最终 VO
+        TopicDetailVO detail = new TopicDetailVO();
+        detail.setTopicInfo(TopicInfoVO.from(topic));
+        detail.setComments(commentPage);
+
+        return detail;
+    }
 }

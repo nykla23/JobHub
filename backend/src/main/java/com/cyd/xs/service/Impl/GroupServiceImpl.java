@@ -52,14 +52,22 @@ public class GroupServiceImpl implements GroupService {
             int offset = (pageNum - 1) * pageSize;
 
             // 如果 userId 为 null 或 0，传入字符串 "0"
-            String userIdStr = (userId != null && userId != 0L) ? String.valueOf(userId) : "0";
+            Long safeUserId = (userId != null ? userId : 0L);
+
 
             // 处理空字符串参数
             String keywordParam = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
             String tagParam = (tag != null && !tag.trim().isEmpty()) ? tag.trim() : null;
+            int safePageSize = pageSize;
 
             // 查询小组基本信息，传入 userId
-            List<Group> groups = groupMapper.findGroups(keywordParam, tagParam, sort, offset, pageSize, userIdStr);
+            List<Group> groups = groupMapper.findGroups(
+                    keywordParam,
+                    tagParam,
+                    offset,
+                    pageSize
+            );
+
 
             // 查询总数，传入过滤参数
             Long total = groupMapper.countGroups(keywordParam, tagParam);
@@ -72,10 +80,11 @@ public class GroupServiceImpl implements GroupService {
 
                 // 解析标签
                 if (group.getTags() != null && !group.getTags().isEmpty()) {
-                    item.setTags(group.getTags());
+                    item.setTags(Arrays.asList(group.getTags().split(",")));
                 } else {
                     item.setTags(new ArrayList<>());
                 }
+
 
                 item.setMemberCount(group.getMemberCount() != null ? group.getMemberCount() : 0);
                 item.setActivityType(group.getActivityType());
@@ -83,7 +92,10 @@ public class GroupServiceImpl implements GroupService {
                 item.setAvatar(group.getAvatar());
 
                 // 使用从SQL查询中获取的 isJoined 字段
-                item.setJoined(group.getIsJoined() != null ? group.getIsJoined() : false);
+                item.setJoined(
+                        group.getIsJoined() != null && group.getIsJoined() == 1
+                );
+
 
                 return item;
             }).collect(Collectors.toList());
@@ -178,6 +190,7 @@ public class GroupServiceImpl implements GroupService {
         log.info("获取小组详情: groupId={}, userId={}", groupId, userId);
 
         try {
+            // 1️⃣ 查询小组
             Group group = groupMapper.findById(groupId);
             if (group == null) {
                 throw new RuntimeException("小组不存在");
@@ -185,105 +198,137 @@ public class GroupServiceImpl implements GroupService {
 
             GroupDetailDTO result = new GroupDetailDTO();
 
-            // 小组基本信息
+            // 2️⃣ 小组基本信息
             GroupDetailDTO.GroupInfo groupInfo = new GroupDetailDTO.GroupInfo();
             groupInfo.setId(group.getId());
             groupInfo.setName(group.getName());
-
-            // 解析tags - 修复这里
-            if (group.getTags() != null) {
-                groupInfo.setTags(group.getTags()); // 直接赋值，因为Group中的tags已经是List<String>
-            }
-
             groupInfo.setMemberCount(group.getMemberCount());
             groupInfo.setActivityType(group.getActivityType());
             groupInfo.setIntro(group.getIntro());
             groupInfo.setAvatar(group.getAvatar());
 
-            // 检查用户是否已加入
+            if (group.getTags() != null && !group.getTags().isEmpty()) {
+                groupInfo.setTags(Arrays.asList(group.getTags().split(",")));
+            }
+
+            // 3️⃣ 当前用户状态
             GroupMember member = groupMemberMapper.findByGroupAndUser(groupId, userId);
             groupInfo.setIsJoined(member != null);
-            groupInfo.setIsManager(member != null && ("manager".equals(member.getRole()) || "creator".equals(member.getRole())));
+            groupInfo.setIsManager(
+                    member != null &&
+                            ("manager".equals(member.getRole()) || "creator".equals(member.getRole()))
+            );
 
             result.setGroupInfo(groupInfo);
 
-            // 小组动态
+            // 4️⃣ 小组动态
+            List<GroupDynamic> dynamics =
+                    groupDynamicMapper.findDynamicsByGroupId(groupId, 0, 10);
+
             GroupDetailDTO.GroupDynamic groupDynamic = new GroupDetailDTO.GroupDynamic();
-            List<GroupDynamic> dynamics = groupDynamicMapper.findDynamicsByGroupId(groupId, 0, 10);
             groupDynamic.setTotal(groupDynamicMapper.countDynamicsByGroupId(groupId));
             groupDynamic.setPageNum(1);
             groupDynamic.setPageSize(10);
 
-            List<GroupDetailDTO.DynamicItem> dynamicList = dynamics.stream().map(dynamic -> {
-                GroupDetailDTO.DynamicItem item = new GroupDetailDTO.DynamicItem();
-                item.setId(dynamic.getId());
-                item.setUserId(Collections.singletonList(dynamic.getUserId()));
-                item.setNickname(dynamic.getNickname());
-                item.setAvatar(dynamic.getAvatar());
-                item.setTitle(dynamic.getTitle());
-                item.setContent(dynamic.getContent());
-                item.setPublishTime(dynamic.getCreatedAt());
-                item.setLikeCount(dynamic.getLikeCount());
-                item.setCommentCount(dynamic.getCommentCount());
-                // 解析图片URL
-                if (dynamic.getImageUrls() != null) {
-                    try {
-                        item.setImageUrls(Arrays.asList(objectMapper.readValue(dynamic.getImageUrls(), String[].class)));
-                    } catch (JsonProcessingException e) {
-                        // 处理异常 - 如果是逗号分隔的字符串
-                        String[] urls = dynamic.getImageUrls().split(",");
-                        item.setImageUrls(Arrays.asList(urls));
-                    }
-                }
-                return item;
-            }).collect(Collectors.toList());
-            groupDynamic.setList(dynamicList);
+            groupDynamic.setList(
+                    dynamics.stream().map(dynamic -> {
+                        GroupDetailDTO.DynamicItem item =
+                                new GroupDetailDTO.DynamicItem();
+                        item.setId(dynamic.getId());
+                        item.setUserId(Collections.singletonList(dynamic.getUserId()));
+                        item.setNickname(dynamic.getNickname());
+                        item.setAvatar(dynamic.getAvatar());
+                        item.setTitle(dynamic.getTitle());
+                        item.setContent(dynamic.getContent());
+                        item.setPublishTime(dynamic.getCreatedAt());
+                        item.setLikeCount(dynamic.getLikeCount());
+                        item.setCommentCount(dynamic.getCommentCount());
+
+                        if (dynamic.getImageUrls() != null) {
+                            try {
+                                item.setImageUrls(
+                                        Arrays.asList(
+                                                objectMapper.readValue(
+                                                        dynamic.getImageUrls(),
+                                                        String[].class
+                                                )
+                                        )
+                                );
+                            } catch (Exception e) {
+                                item.setImageUrls(
+                                        Arrays.asList(dynamic.getImageUrls().split(","))
+                                );
+                            }
+                        }
+                        return item;
+                    }).collect(Collectors.toList())
+            );
+
             result.setGroupDynamic(groupDynamic);
 
-            // 小组资源
-            GroupDetailDTO.GroupResource groupResource = new GroupDetailDTO.GroupResource();
-            List<GroupResource> resources = groupResourceMapper.findResourcesByGroupId(groupId, 5);
-            groupResource.setTotal(groupResourceMapper.countResourcesByGroupId(groupId));
+            // 5️⃣ 小组资源
+            List<GroupResource> resources =
+                    groupResourceMapper.findResourcesByGroupId(groupId, 5);
+
+            GroupDetailDTO.GroupResource groupResource =
+                    new GroupDetailDTO.GroupResource();
+            groupResource.setTotal(
+                    groupResourceMapper.countResourcesByGroupId(groupId)
+            );
             groupResource.setPageNum(1);
             groupResource.setPageSize(5);
 
-            List<GroupDetailDTO.ResourceItem> resourceList = resources.stream().map(resource -> {
-                GroupDetailDTO.ResourceItem item = new GroupDetailDTO.ResourceItem();
-                item.setId(resource.getId());
-                item.setTitle(resource.getTitle());
-                item.setType(resource.getType()); // 添加类型
-                item.setUploader(resource.getUploader());
-                item.setUploadTime(resource.getCreatedAt()); // 修复字段名
-                item.setDownloadCount(resource.getDownloadCount());
-                item.setSize(resource.getSize()); // 添加文件大小
-                item.setLink(resource.getLink()); // 使用资源本身的link字段
-                return item;
-            }).collect(Collectors.toList());
-            groupResource.setList(resourceList);
+            groupResource.setList(
+                    resources.stream().map(resource -> {
+                        GroupDetailDTO.ResourceItem item =
+                                new GroupDetailDTO.ResourceItem();
+                        item.setId(resource.getId());
+                        item.setTitle(resource.getTitle());
+                        item.setType(resource.getType());
+                        item.setUploader(resource.getUploader());
+                        item.setUploadTime(resource.getCreatedAt());
+                        item.setDownloadCount(resource.getDownloadCount());
+                        item.setSize(resource.getSize());
+                        item.setLink(resource.getLink());
+                        return item;
+                    }).collect(Collectors.toList())
+            );
+
             result.setGroupResource(groupResource);
 
-            // 小组通知
-            GroupDetailDTO.GroupNotice groupNotice = new GroupDetailDTO.GroupNotice();
-            List<GroupNotice> notices = groupNoticeMapper.findNoticesByGroupId(groupId);
-            groupNotice.setTotal(groupNoticeMapper.countNoticesByGroupId(groupId));
+            // 6️⃣ 小组公告
+            List<GroupNotice> notices =
+                    groupNoticeMapper.findNoticesByGroupId(groupId);
 
-            List<GroupDetailDTO.NoticeItem> noticeList = notices.stream().map(notice -> {
-                GroupDetailDTO.NoticeItem item = new GroupDetailDTO.NoticeItem();
-                item.setId(notice.getId());
-                item.setTitle(notice.getTitle());
-                item.setContent(notice.getContent());
-                item.setPublishTime(notice.getCreatedAt());
-                return item;
-            }).collect(Collectors.toList());
-            groupNotice.setList(noticeList);
+            GroupDetailDTO.GroupNotice groupNotice =
+                    new GroupDetailDTO.GroupNotice();
+            groupNotice.setTotal(
+                    groupNoticeMapper.countNoticesByGroupId(groupId)
+            );
+            groupNotice.setList(
+                    notices.stream().map(notice -> {
+                        GroupDetailDTO.NoticeItem item =
+                                new GroupDetailDTO.NoticeItem();
+                        item.setId(notice.getId());
+                        item.setTitle(notice.getTitle());
+                        item.setContent(notice.getContent());
+                        item.setPublishTime(notice.getCreatedAt());
+                        return item;
+                    }).collect(Collectors.toList())
+            );
+
             result.setGroupNotice(groupNotice);
 
             return result;
+
         } catch (Exception e) {
-            log.error("获取小组详情失败: {}", e.getMessage(), e);
-            throw new RuntimeException("获取小组详情失败");
+            // 🔥🔥🔥 关键：打印完整真实异常
+            log.error("【获取小组详情发生异常】", e);
+            throw e; // 不包装，保证看到真实 MyBatis / SQL 错误
         }
     }
+
+
 
     @Override
     @Transactional
@@ -343,7 +388,7 @@ public class GroupServiceImpl implements GroupService {
             return result;
         } catch (Exception e) {
             log.error("小组操作失败: {}", e.getMessage(), e);
-            throw new RuntimeException("小组操作失败");
+            throw e;
         }
     }
 

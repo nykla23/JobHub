@@ -2,8 +2,8 @@
   <div class="page topics-page">
     <section class="card page-header">
       <div>
-        <p class="eyebrow">话题广场 · {{ identityTag || '全部用户' }}</p>
-        <h1>{{ headline }}</h1>
+        <p class="eyebrow">话题广场</p>
+        <h1>精选求职与职场话题</h1>
       </div>
       <div class="sort-group">
         <button
@@ -75,12 +75,6 @@ import SkeletonBlock from '@/components/state/SkeletonBlock.vue';
 import EmptyState from '@/components/state/EmptyState.vue';
 import { fetchTopicList } from '@/api/services/topic';
 
-const tagMapByIdentity = {
-  学生: ['秋招面试', '第一份实习', '简历优化', 'offer选择', '研究生求职'],
-  职场菜鸟: ['职场新人避坑', '入职适应', '转正汇报', '沟通技巧', '试用期'],
-  专家: ['创作指南', '答疑话题', '内容评级', '榜单曝光', '用户反馈'],
-  职场老手: ['行业交流', '管理进阶', '跳槽/晋升', '经验分享', 'offer选择']
-};
 
 export default {
   name: 'Topics',
@@ -103,7 +97,7 @@ export default {
       loading: false,
       total: 0,
       pageNum: 1,
-      pageSize: 6
+      pageSize: 8
     };
   },
 
@@ -112,21 +106,21 @@ export default {
       return this.$store.state.identityTag;
     },
 
-    headline() {
-      const map = {
-        学生: '校招 / 实习精选话题',
-        职场菜鸟: '职场新人避坑与适应',
-        专家: '专家答疑与创作灵感',
-        职场老手: '行业交流与进阶成长'
-      };
-      return map[this.identityTag] || '精选求职与职场话题';
-    },
-
     tagFilters() {
-      const defaults = ['秋招面试', '简历优化', '行业交流', 'offer选择'];
-      const list = tagMapByIdentity[this.identityTag] || defaults;
-      return ['', ...new Set(list)];
-    },
+  return [
+    '',
+    '秋招面试',
+    '第一份实习',
+    '简历优化',
+    '职场新人避坑',
+    '转正汇报',
+    '沟通技巧',
+    '行业交流',
+    '管理进阶',
+    '经验分享',
+    'offer选择'
+  ];
+},
 
     totalPages() {
       if (!this.total) return 1;
@@ -142,11 +136,6 @@ export default {
         this.syncFromRoute();
       }
     },
-
-    // 改变身份 → 重载数据
-    identityTag() {
-      this.loadTopics();
-    }
   },
 
   methods: {
@@ -172,7 +161,6 @@ export default {
           sort: this.activeSort,
           pageNum: this.pageNum,
           pageSize: this.pageSize,
-          identity: this.identityTag
         });
 
         this.topics = data.list || [];

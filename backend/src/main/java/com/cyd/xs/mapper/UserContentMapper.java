@@ -30,27 +30,26 @@ public interface UserContentMapper {
     // 统计已发布内容数量
     @Select("SELECT COUNT(*) FROM user_contents WHERE status = 'passed'")
     Long countPublishedContents();
-
-    // 根据用户身份标签推荐内容
-    @Select("SELECT uc.*, u.display_name as author_name, u.avatar_url " +
+    // 根据标签推荐内容（基于 user_contents.tag）
+    @Select("<script>" +
+            "SELECT uc.*, u.display_name AS author_name, u.avatar_url " +
             "FROM user_contents uc " +
             "LEFT JOIN users u ON uc.user_id = u.id " +
             "WHERE uc.status = 'passed' " +
-            "AND (uc.recommended_for IS NULL OR uc.recommended_for LIKE CONCAT('%', #{identity}, '%')) " +
+            "<if test='tags != null and tags.size() > 0'>" +
+            " AND (" +
+            "   <foreach collection='tags' item='tag' separator=' OR '>" +
+            "     FIND_IN_SET(#{tag}, uc.tag)" +
+            "   </foreach>" +
+            " )" +
+            "</if>" +
             "ORDER BY uc.hot_score DESC, uc.created_at DESC " +
-            "LIMIT #{limit}")
-    List<UserContent> findRecommendedContentsByIdentity(@Param("identity") String identity, @Param("limit") int limit);
-
-    // 根据标签推荐内容
-    @Select("SELECT DISTINCT uc.*, u.display_name as author_name, u.avatar_url " +
-            "FROM user_contents uc " +
-            "LEFT JOIN users u ON uc.user_id = u.id " +
-            "LEFT JOIN entity_tags et ON et.entity_type = 'content' AND et.entity_id = uc.id " +
-            "WHERE uc.status = 'passed' " +
-            "AND et.tag_id IN (#{tagIds}) " +
-            "ORDER BY uc.hot_score DESC, uc.created_at DESC " +
-            "LIMIT #{limit}")
-    List<UserContent> findRecommendedContentsByTags(@Param("tagIds") List<Long> tagIds, @Param("limit") int limit);
+            "LIMIT #{limit}" +
+            "</script>")
+    List<UserContent> findRecommendedContentsByTags(
+            @Param("tags") List<String> tags,
+            @Param("limit") int limit
+    );
 
     // 搜索用户内容（支持分页和排序）
     @Select("<script>" +

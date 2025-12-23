@@ -5,7 +5,7 @@
       <div class="profile-info">
         <p class="eyebrow">个人主页</p>
         <h1>{{ profile.nickname || "未命名用户" }}</h1>
-        <p class="stage-text">{{ profile.stage || profile.careerStage }}</p>
+        <p class="stage-text">{{profile.careerStage || "未选择" }}</p>
         <p class="intro">{{ profile.bio || profile.intro }}</p>
       </div>
       <div class="hero-actions">
@@ -285,6 +285,8 @@ import {
   fetchMyCollections,
   fetchMyPublish,
   updateCareerStage,
+  saveIdentityTag,        // ⭐ 新增
+  fetchIdentityTag        // ⭐ 新增
 } from "@/api/services/user";
 
 const tabLoaders = {
@@ -349,15 +351,29 @@ export default {
   },
   created() {
     this.loadOverview();
+    this.loadIdentityTag();
     this.switchTab("history");
     this.activeFolder = this.folders[0]?.id || null;
     this.pendingRole = this.identityTag || this.roles[0];
   },
   methods: {
     ...mapMutations(["setIdentityTag", "setProfile"]),
+    async loadIdentityTag() {
+    try {
+      const tag = await fetchIdentityTag();
+      this.setIdentityTag(tag || null);
+    } catch (e) {
+      console.warn("[profile] 获取身份标签失败", e);
+    }
+  },
     async loadOverview() {
       const data = await this.$store.dispatch("fetchProfileOverview");
-      this.stats = data.stats || {};
+      this.setProfile({
+      ...data,
+      // ★★★ 关键：把后端 displayName 映射到前端 nickname
+      nickname: data.displayName
+    });
+    this.stats = data.stats || {};
     },
     async switchTab(tab) {
       if (this.activeTab === tab && this.tabData[tab].length) return;
@@ -466,21 +482,25 @@ export default {
       this.closeIdentity();
     },
     async confirmIdentity() {
-      const role = this.pendingRole || this.roles[0];
-      try {
-        await updateCareerStage(role);
-        this.setIdentityTag(role);
-        this.setProfile({ stage: role, careerStage: role });
-        this.$root.$refs.toast?.show("身份已更新", "success");
-        this.closeIdentity();
-      } catch (error) {
-        console.error("[profile] 更新身份失败", error);
-        this.$root.$refs.toast?.show(
-          error?.message || "更新身份失败",
-          "error"
-        );
-      }
-    },
+  const role = this.pendingRole || this.roles[0];
+  try {
+    // 1️⃣ 真正调用后端保存
+    await saveIdentityTag(role);
+
+    // 2️⃣ 更新 Vuex（仅用于显示）
+    this.setIdentityTag(role);
+
+    this.$root.$refs.toast?.show("身份已更新", "success");
+    this.closeIdentity();
+  } catch (error) {
+    console.error("[profile] 更新身份失败", error);
+    this.$root.$refs.toast?.show(
+      error?.message || "更新身份失败",
+      "error"
+    );
+  }
+}
+,
   },
 };
 </script>

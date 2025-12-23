@@ -37,7 +37,13 @@ public class ExpertServiceImpl extends ServiceImpl<ExpertMapper, Expert> impleme
                 vo.setAvatar("https://picsum.photos/id/64/200/200"); // 随机默认头像
             }
         });
-
+        System.out.println(
+                "【DEBUG ExpertPage】 keyword=" + keyword
+                        + ", tag=" + tag
+                        + ", sort=" + sort
+                        + ", pageNum=" + pageNum
+                        + ", pageSize=" + pageSize
+        );
         // 封装分页结果
         Page<ExpertVO> page = new Page<>(pageNum, pageSize);
         page.setRecords(expertList);

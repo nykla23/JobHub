@@ -6,7 +6,7 @@
     ======================= -->
     <section class="card carousel-card">
       <header class="section-header">
-        <h2>热门直播与活动</h2>
+        <h2>热门内容与活动</h2>
       </header>
 
       <div v-if="overviewLoading && !slides.length">
@@ -128,7 +128,7 @@ export default {
     return {
       refreshKey: 0,
       recommendPage: 1,
-      pageSize: 5,
+      pageSize: 2,
       overviewLoading: false,
       recommendLoading: false,
       recommendedList: [],
@@ -182,51 +182,63 @@ export default {
   methods: {
     /** 获取首页其他数据 */
     async fetchHomeData() {
-      this.overviewLoading = true;
-      this.recommendLoading = true;
+  this.overviewLoading = true;
+  this.recommendLoading = true;
 
-      try {
-        const data = await getHomeOverview({ identity: this.identityTag });
+  try {
+    const data = await getHomeOverview({ pageNum: 1 });
 
-        // 活动
-        this.hotActivities = data.hotActivities || [];
+    // 热点活动
+    this.hotActivities = data.hotActivities || [];
 
-        // 推荐内容
-        const recommended = data.recommendedContent || {};
-        this.recommendedList = this.adaptRecommendList(recommended.list || []);
-        this.recommendPage = recommended.pageNum || 1;
-        this.pageSize = recommended.pageSize || this.pageSize;
+    // 话题推荐（2 条）
+    this.recommendedList = (data.topicRecommend || []).map(t => ({
+      tag: t.level || "话题",
+      title: t.title,
+      desc: t.tag,
+      author: "话题",
+      stats: `${t.participantCount || 0} 人参与 · ${t.interactiveCount || 0} 互动`,
+      link: `/topic/${t.id}`,
+      type: "topic"
+    }));
 
-        this.refreshKey++;
-      } catch (err) {
-        console.error("[home] 获取首页数据失败", err);
-      } finally {
-        this.overviewLoading = false;
-        this.recommendLoading = false;
-      }
-    },
+    this.recommendPage = 1;
+    this.refreshKey++;
+  } catch (err) {
+    console.error("[home] 获取首页数据失败", err);
+  } finally {
+    this.overviewLoading = false;
+    this.recommendLoading = false;
+  }
+},
+
 
     /** 刷新推荐 */
     async refresh() {
-      this.recommendLoading = true;
-      const nextPage = this.recommendPage + 1;
+  this.recommendLoading = true;
 
-      try {
-        const data = await refreshRecommendFeed({
-          identity: this.identityTag,
-          pageNum: nextPage,
-          pageSize: this.pageSize
-        });
+  try {
+    const data = await getHomeOverview({ identity: this.identityTag });
 
-        this.recommendedList = this.adaptRecommendList(data.list || []);
-        this.recommendPage = data.pageNum || nextPage;
-        this.refreshKey++;
-      } catch (err) {
-        console.error("[home] 换一批推荐失败", err);
-      } finally {
-        this.recommendLoading = false;
-      }
-    },
+    this.recommendedList = (data.topicRecommend || []).map(t => ({
+      tag: t.level || '话题',
+      title: t.title,
+      desc: t.tag,
+      author: '话题',
+      stats: `${t.participantCount || 0} 人参与 · ${t.interactiveCount || 0} 互动`,
+      link: `/topic/${t.id}`,
+      type: 'topic'
+    }));
+
+    this.refreshKey++;
+  } catch (err) {
+    console.error("[home] 换一批推荐失败", err);
+  } finally {
+    this.recommendLoading = false;
+  }
+}
+
+,
 
     /** 推荐内容格式适配 */
     adaptRecommendList(list) {
@@ -257,24 +269,29 @@ export default {
 
     /** 打开链接 */
     openLink(item) {
-      if (!item) return;
+  if (!item) return;
 
-      let target = item.link || "";
+  // ⭐ 1️⃣ 只要后端给了 link，直接用
+  if (item.link) {
+    // 外链
+    if (item.link.startsWith("http")) {
+      window.open(item.link, "_blank");
+    } else {
+      this.$router.push(item.link);
+    }
+    return;
+  }
 
-      if (target.startsWith("http")) {
-        window.open(target, "_blank");
-        return;
-      }
-
-      const t = (item.type || item.tag || "").toLowerCase();
-      if (t.includes("topic")) target = "/topics";
-      else if (t.includes("group")) target = "/circles";
-      else if (t.includes("video") || t.includes("expert") || t.includes("pro"))
-        target = "/pro";
-      else target = "/search";
-
-      this.$router.push(target);
-    },
+  // 2️⃣ 兜底逻辑（几乎不会再用到）
+  const t = (item.type || "").toLowerCase();
+  if (t.includes("group")) {
+    this.$router.push("/circles");
+  } else if (t.includes("video") || t.includes("expert") || t.includes("pro")) {
+    this.$router.push("/pro");
+  } else {
+    this.$router.push("/search");
+  }
+},
 
     /** 活动描述字段 */
     formatActivityMeta(activity) {

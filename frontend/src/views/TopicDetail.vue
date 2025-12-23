@@ -167,7 +167,8 @@ export default {
         fav: item.likeCount || 0,
         body: item.content || '',
         timestamp,
-        liking: false
+        liking: false,
+        isLike: false
       };
     },
     formatTime(value) {
@@ -217,19 +218,29 @@ export default {
       }
     },
     async like(post) {
-      if (!post || post.liking) return;
-      post.liking = true;
-      try {
-        const result = await toggleCommentLike(post.id, true);
-        post.fav = result?.likeCount ?? post.fav + 1;
-        this.toast('已点赞', 'success');
-      } catch (error) {
-        console.error('[topic] 点赞失败', error);
-        this.toast('点赞失败，请稍后再试', 'error');
-      } finally {
-        post.liking = false;
-      }
-    },
+  if (!post || post.liking) return;
+
+  post.liking = true;
+  const nextIsLike = !post.isLike; // ⭐ 关键：取反
+
+  try {
+    const result = await toggleCommentLike(post.id, nextIsLike);
+
+    // 更新状态
+    post.isLike = nextIsLike;
+    post.fav = result?.likeCount ?? (
+      nextIsLike ? post.fav + 1 : Math.max(0, post.fav - 1)
+    );
+
+    this.toast(nextIsLike ? '已点赞' : '已取消点赞', 'success');
+  } catch (error) {
+    console.error('[topic] 点赞/取消失败', error);
+    this.toast('操作失败，请稍后再试', 'error');
+  } finally {
+    post.liking = false;
+  }
+}
+,
     prefillReply(post) {
       if (!post) return;
       this.form.body = `@${post.author} `;

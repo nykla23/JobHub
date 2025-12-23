@@ -72,7 +72,10 @@ export default {
       const source = this.profile || {};
       this.form = {
         nickname: source.nickname || '',
-        careerStage: source.stage || source.careerStage || '',
+        careerStage:
+  source.careerStage && source.careerStage !== '未设置'
+    ? source.careerStage
+    : '',
         intro: source.bio || source.intro || '',
         focusArea: source.focusArea || (source.focus ? source.focus.join(' · ') : ''),
         city: source.city || ''

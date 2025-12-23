@@ -31,7 +31,7 @@ public class User {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
-
+    private String identityTag;
     public User() {
     }
 

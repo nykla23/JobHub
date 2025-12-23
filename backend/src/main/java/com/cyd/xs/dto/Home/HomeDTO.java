@@ -17,6 +17,7 @@ public class HomeDTO {
     private List<CommunityTopic> communityTopics;
     private List<Activity> activities;
 
+    private List<TopicRecommendItem> topicRecommend;
     // 首页数据结构
     @Data
     public static class Carousel {
@@ -83,5 +84,14 @@ public class HomeDTO {
         private Long activityId;
         private String title;
         private String time;
+    }
+    @Data
+    public static class TopicRecommendItem {
+        private Long id;
+        private String title;
+        private String tag;               // 原始 tag 字符串
+        private String level;             // A / S
+        private Integer participantCount;
+        private Integer interactiveCount;
     }
 }

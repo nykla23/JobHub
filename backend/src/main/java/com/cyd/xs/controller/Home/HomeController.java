@@ -12,13 +12,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
+import com.cyd.xs.service.UserService;
+import com.cyd.xs.Utils.ResultVO;
+import jakarta.annotation.Resource;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/home")
 @RequiredArgsConstructor
 public class HomeController {
-
+    @Resource
+    private UserService userService;
     private final HomeService homeService;
 
 
@@ -27,26 +30,17 @@ public class HomeController {
      * 文档路径：GET /api/v1/home
      */
     @GetMapping
-    public ResponseEntity<Result<?>> getHomeData(Authentication authentication) {
-        try {
-            System.out.println("开始获取首页数据...");
+    public ResponseEntity<Result<?>> getHomeData(
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            Authentication authentication) {
 
-            // 获取用户ID，允许未登录用户访问
-            Long userId = getUserIdFromAuth(authentication);
+        Long userId = getUserIdFromAuth(authentication);
 
-//            Long userId = null;
-//            if (authentication != null && authentication.isAuthenticated()) {
-//                userId = Long.parseLong(authentication.getName());
-//            }
-            System.out.println("用户ID: " + userId);
-            HomeDTO homeDTO = homeService.getHomeData(userId);
-            return ResponseEntity.ok(Result.success("获取成功", homeDTO));
-        } catch (Exception e) {
-            System.err.println("获取首页数据失败: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.ok(Result.error("获取首页数据失败: " + e.getMessage()));
-        }
+        HomeDTO homeDTO = homeService.getHomeData(userId);
+
+        return ResponseEntity.ok(Result.success("获取成功", homeDTO));
     }
+
 
 
 
@@ -91,79 +85,13 @@ public class HomeController {
         }
     }
 
-    // 辅助方法：获取用户ID（允许未登录）
     private Long getUserIdFromAuth(Authentication authentication) {
-        if (authentication != null && authentication.isAuthenticated()) {
-            try {
-                return Long.parseLong(authentication.getName());
-            } catch (NumberFormatException e) {
-                log.warn("用户ID格式错误: {}", authentication.getName());
-                return null;
-            }
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
         }
-        return null; // 未登录返回null
+
+        String username = authentication.getName(); // 123@163.com
+        return userService.getUserIdByUsername(username);
     }
-
-
-
-//    private String getUserIdFromAuthentication(Authentication authentication) {
-//        if (authentication != null && authentication.isAuthenticated()) {
-//            return authentication.getName(); // 假设用户名就是userId
-//        }
-//        throw new RuntimeException("用户未认证");
-//    }
-
-
-
-//    //首次进入 APP - 身份标签选择
-//    @PostMapping("/select-identity")
-//    public ResponseEntity<Result<?>> selectIdentity(@RequestParam String identityType,
-//                                                    @RequestParam String userId) {
-//        try {
-//            HomeDTO homeDTO = homeService.selectIdentity(identityType, userId);
-//            return ResponseEntity.ok(Result.success("身份标签选择成功", homeDTO));
-//        } catch (Exception e) {
-//            return ResponseEntity.badRequest().body(Result.error("身份标签选择失败"));
-//        }
-//    }
-//
-//    //全域搜索
-//    @GetMapping("/search")
-//    public ResponseEntity<Result<?>> search(@RequestParam String keyword,
-//                                              @RequestParam(required = false) String tabType,
-//                                              @RequestParam(required = false) Integer page,
-//                                              @RequestParam(required = false) Integer pageSize,
-//                                              @RequestParam String userId) {
-//        try {
-//            SearchDTO searchDTO = homeService.search(keyword, tabType, page, pageSize, userId);
-//            return ResponseEntity.ok(Result.success("搜索成功", searchDTO));
-//        } catch (Exception e) {
-//            return ResponseEntity.badRequest().body(Result.error("搜索失败"));
-//        }
-//    }
-//
-//    //清除搜索历史
-//    @PostMapping("/clear-search-history")
-//    public ResponseEntity<Result<?>> clearSearchHistory(@RequestParam String userId) {
-//        try {
-//            homeService.clearSearchHistory(userId);
-//            return ResponseEntity.ok(Result.success("搜索历史清除成功"));
-//        } catch (Exception e) {
-//            return ResponseEntity.badRequest().body(Result.error("清除失败"));
-//        }
-//    }
-//
-//    //首页推荐内容刷新
-//    @GetMapping("/refresh-recommend")
-//    public ResponseEntity<Result<?>> refreshRecommend(@RequestParam String userId,
-//                                                      @RequestParam(required = false) Integer pageSize) {
-//        try {
-//            HomeDTO homeDTO = (HomeDTO) homeService.refreshRecommend(userId, pageSize);
-//            return ResponseEntity.ok(Result.success("推荐内容刷新成功", homeDTO));
-//        } catch (Exception e) {
-//            return ResponseEntity.badRequest().body(Result.error("推荐内容刷新失败"));
-//        }
-//    }
-
 
 }

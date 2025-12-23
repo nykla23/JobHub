@@ -16,6 +16,11 @@ import org.springframework.stereotype.Service;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
+import com.cyd.xs.service.UserService;
+import com.cyd.xs.mapper.Topic.TopicMapper;
+import com.cyd.xs.entity.Topic.Topic;
+import java.util.Collections;
 
 @Slf4j
 @Service
@@ -26,38 +31,80 @@ public class HomeServiceImpl implements HomeService {
     private final HotActivityMapper hotActivityMapper;
     private final UserMapper userMapper;
     private final UserContentMapper userContentMapper;
+    private final UserService userService;
+    private final TopicMapper topicMapper;
 
     // =====================================================
     // 首页数据
     // =====================================================
+    // ⭐ 固定配置
+    private static final int RECOMMEND_PAGE_SIZE = 2;
+
     @Override
     public HomeDTO getHomeData(Long userId) {
-        log.info("用户 {} 获取首页数据", userId);
 
         HomeDTO homeDTO = new HomeDTO();
 
-        try {
-            // 1. 用户身份
-            String userIdentity = getUserIdentity(userId);
-            homeDTO.setUserIdentity(userIdentity);
-
-            // 2. 轮播图
-            homeDTO.setCarousel(getCarouselData());
-
-            // 3. 热门活动
-            homeDTO.setHotActivities(getHotActivities());
-
-            // 4. 为你推荐（内容流，来自 user_contents）
-            HomeDTO.RecommendedContent recommendedContent =
-                    getHomeRecommendedContent(userIdentity, 1, 5);
-            homeDTO.setRecommendedContent(recommendedContent);
-
-            return homeDTO;
-        } catch (Exception e) {
-            log.error("获取首页数据失败", e);
-            throw new RuntimeException("获取首页数据失败");
+        // 1️⃣ 中文身份
+        String identityTag = null;
+        if (userId != null) {
+            identityTag = userService.getIdentityTag(userId);
         }
+        homeDTO.setUserIdentity(identityTag);
+
+        // 2️⃣ 轮播 & 热门活动
+        homeDTO.setCarousel(getCarouselData());
+        homeDTO.setHotActivities(getHotActivities());
+
+        // 3️⃣ ⭐ 话题推荐（核心）
+        if (identityTag != null) {
+
+            List<String> tags =
+                    RECOMMEND_TAG_MAP.getOrDefault(identityTag, List.of());
+
+            if (!tags.isEmpty()) {
+
+                // ① 先把「所有符合身份标签的话题」查出来
+                List<Topic> allTopics =
+                        topicMapper.findRecommendedTopicsByTags(tags, 100);
+
+                if (!allTopics.isEmpty()) {
+                    log.info("【推荐前】topics = {}",
+                            allTopics.stream().map(Topic::getId).toList());
+                    // ② 打乱顺序（关键！）
+                    Collections.shuffle(allTopics);
+
+                    log.info("【推荐后】topics = {}",
+                            allTopics.stream().map(Topic::getId).toList());
+                    // ③ 只取前 2 条
+                    List<Topic> picked =
+                            allTopics.stream().limit(2).toList();
+
+                    List<HomeDTO.TopicRecommendItem> topicItems =
+                            picked.stream().map(t -> {
+                                HomeDTO.TopicRecommendItem item =
+                                        new HomeDTO.TopicRecommendItem();
+                                item.setId(t.getId());
+                                item.setTitle(t.getTitle());
+                                item.setTag(t.getTag());
+                                item.setLevel(t.getLevel());
+                                item.setParticipantCount(t.getParticipantCount());
+                                item.setInteractiveCount(t.getInteractiveCount());
+                                return item;
+                            }).toList();
+
+                    homeDTO.setTopicRecommend(topicItems);
+                }
+            }
+        }
+
+        return homeDTO;
     }
+
+
+
+
+
 
     // =====================================================
     // 为你推荐内容（首页内容流）
@@ -66,18 +113,23 @@ public class HomeServiceImpl implements HomeService {
             String userIdentity, Integer pageNum, Integer pageSize) {
 
         int offset = (pageNum - 1) * pageSize;
+
+        List<String> tags =
+                RECOMMEND_TAG_MAP.getOrDefault(userIdentity, List.of());
+
         List<UserContent> contents;
 
-        if (userIdentity != null && !userIdentity.isEmpty()) {
+        if (!tags.isEmpty()) {
+            // ⭐ 按“推荐标签”查内容
             contents = userContentMapper
-                    .findRecommendedContentsByIdentity(userIdentity, pageSize);
+                    .findRecommendedContentsByTags(tags, pageSize);
         } else {
             contents = userContentMapper
                     .findRecommendedContentsByPage(offset, pageSize);
         }
 
         HomeDTO.RecommendedContent result = new HomeDTO.RecommendedContent();
-        result.setTotal(userContentMapper.countPublishedContents());
+        result.setTotal((long) contents.size());
         result.setPageNum(pageNum);
         result.setPageSize(pageSize);
 
@@ -106,6 +158,7 @@ public class HomeServiceImpl implements HomeService {
         result.setList(list);
         return result;
     }
+
 
     // =====================================================
     // 刷新推荐（接口方法，必须实现）
@@ -224,4 +277,9 @@ public class HomeServiceImpl implements HomeService {
             return List.of();
         }
     }
+    private static final Map<String, List<String>> RECOMMEND_TAG_MAP = Map.of(
+            "学生", List.of("秋招面试", "第一份实习", "简历优化"),
+            "职场菜鸟", List.of("职场新人避坑", "转正汇报", "沟通技巧"),
+            "职场老手", List.of("行业交流", "管理进阶", "经验分享", "offer选择")
+    );
 }
