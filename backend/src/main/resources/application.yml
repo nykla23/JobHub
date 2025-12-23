@@ -6,14 +6,14 @@ spring:
       force: true
   # 数据库配置
   datasource:
-    url: jdbc:mysql://localhost:13306/heart_voice?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/heart_voice?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
     username: root
-    password: Heart_voice_passwd1
+    password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
-      ddl-auto: update   # 若使用update 模式，自动创建或更新表结构
+      ddl-auto: validate   # 若使用update 模式，自动创建或更新表结构
     properties:
       hibernate:
         format_sql: true
