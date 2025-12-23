@@ -6,8 +6,9 @@
     </div>
     <p class="desc">{{ item.desc }}</p>
     <div class="meta">{{ item.meta }}</div>
+    
+    <!-- 将按钮容器修改为固定在左下角 -->
     <div class="actions">
-      <button class="ghost-btn">加入小组</button>
       <router-link :to="`/circle/${item.id || 'demo'}`" class="link">进入详情</router-link>
     </div>
   </article>
@@ -35,6 +36,10 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* 设置为相对定位，作为按钮的定位参考 */
+  position: relative;
+  /* 为按钮预留底部空间 */
+  padding-bottom: 50px;
 }
 
 .card-head {
@@ -59,6 +64,8 @@ h3 {
 .desc {
   margin: 0;
   color: var(--gray-700);
+  /* 添加一些灵活性，让描述可以扩展 */
+  flex: 1;
 }
 
 .meta {
@@ -67,9 +74,14 @@ h3 {
 }
 
 .actions {
-  margin-top: 6px;
+  /* 修改为绝对定位，固定在左下角 */
+  position: absolute;
+  bottom: 14px;  /* 与卡片内边距一致 */
+  left: 14px;    /* 与卡片内边距一致 */
+  right: 14px;   /* 可选的，如果需要也可以设置右边距 */
+  margin-top: 0; /* 移除原来的上边距 */
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start; /* 左对齐 */
   align-items: center;
 }
 
@@ -84,5 +96,8 @@ h3 {
 .link {
   color: var(--blue);
   font-weight: 600;
+  /* 可选：添加一些样式让链接更像按钮 */
+  padding: 8px 0;
+  display: inline-block;
 }
 </style>

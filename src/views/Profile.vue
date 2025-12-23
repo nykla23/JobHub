@@ -4,16 +4,12 @@
       <div class="avatar">{{ avatarLetter }}</div>
       <div class="profile-info">
         <p class="eyebrow">个人主页</p>
-        <h1>{{ profile.nickname || '未命名用户' }}</h1>
-        <p class="stage-text">{{ profile.stage || profile.careerStage }}</p>
+        <h1>{{ profile.nickname || "未命名用户" }}</h1>
+        <p class="stage-text">{{profile.careerStage || "未选择" }}</p>
         <p class="intro">{{ profile.bio || profile.intro }}</p>
-        <div class="focus-tags">
-          <span v-for="tag in focusList" :key="tag" class="tag">{{ tag }}</span>
-        </div>
       </div>
       <div class="hero-actions">
         <router-link class="ghost-btn" to="/profile/edit">编辑信息</router-link>
-        <router-link class="ghost-btn" to="/profile/settings">隐私设置</router-link>
       </div>
       <ul class="stats">
         <li>
@@ -38,7 +34,7 @@
     <section class="card identity-card">
       <div>
         <p class="eyebrow">身份标签</p>
-        <h2>{{ identityTag || '未选择' }}</h2>
+        <h2>{{ identityTag || "未选择" }}</h2>
         <p class="sub">用于精准推荐内容、话题和活动，后续可随时切换。</p>
       </div>
       <div class="identity-actions">
@@ -46,7 +42,11 @@
       </div>
     </section>
 
-    <div v-if="showIdentityModal" class="identity-mask" @click.self="closeIdentity">
+    <div
+      v-if="showIdentityModal"
+      class="identity-mask"
+      @click.self="closeIdentity"
+    >
       <div class="identity-dialog">
         <header class="dialog-header">
           <div>
@@ -54,7 +54,9 @@
             <h3>学生 / 职场菜鸟 / 专家 / 职场老手</h3>
             <p class="sub">保存后写入本地，推荐内容将更精准</p>
           </div>
-          <button class="close-btn" aria-label="关闭" @click="closeIdentity">×</button>
+          <button class="close-btn" aria-label="关闭" @click="closeIdentity">
+            ×
+          </button>
         </header>
         <div class="chips role-chips">
           <button
@@ -72,43 +74,6 @@
         </div>
       </div>
     </div>
-
-    <section class="card privacy-card">
-      <div class="privacy-header">
-        <h2>隐私设置</h2>
-        <span>支持隐藏公司、薪资、历史内容等信息</span>
-      </div>
-      <div class="privacy-list">
-        <label class="privacy-row">
-          <div>
-            <p class="title">隐藏具体公司</p>
-            <p class="desc">展示行业/岗位，不展示具体所在企业</p>
-          </div>
-          <button class="switch" @click="togglePrivacy('hideCompany')">
-            {{ settings.hideCompany ? '已隐藏' : '显示' }}
-          </button>
-        </label>
-        <label class="privacy-row">
-          <div>
-            <p class="title">隐藏薪资范围</p>
-            <p class="desc">薪资信息仅自己可见</p>
-          </div>
-          <button class="switch" @click="togglePrivacy('hideSalary')">
-            {{ settings.hideSalary ? '已隐藏' : '显示' }}
-          </button>
-        </label>
-        <label class="privacy-row">
-          <div>
-            <p class="title">隐藏历史发布</p>
-            <p class="desc">隐藏后主页仅展示精选内容</p>
-          </div>
-          <button class="switch" @click="togglePrivacy('hideHistory')">
-            {{ settings.hideHistory ? '已隐藏' : '显示' }}
-          </button>
-        </label>
-      </div>
-    </section>
-
     <section class="card data-card">
       <header class="data-header">
         <div>
@@ -131,17 +96,36 @@
         <div v-if="activeTab === 'history'" class="data-list">
           <div class="list-header">
             <span>记录查看过的话题/内容/小组，支持单条删除或批量清除</span>
-            <button v-if="currentTabList.length" class="ghost-btn small" @click="clearAllHistory">批量清除</button>
+            <button
+              v-if="currentTabList.length"
+              class="ghost-btn small"
+              @click="clearAllHistory"
+            >
+              批量清除
+            </button>
           </div>
-          <div v-for="item in currentTabList" :key="item.id" class="history-item">
+          <div
+            v-for="item in currentTabList"
+            :key="item.id"
+            class="history-item"
+          >
             <div class="item-content">
-              <span class="item-type">{{ item.type || '内容' }}</span>
+              <span class="item-type">{{ item.type || "内容" }}</span>
               <span class="item-title">{{ item.title }}</span>
-              <span class="item-meta">{{ item.time }} · 来自:{{ item.source }}</span>
+              <span class="item-meta"
+                >{{ item.time }} · 来自:{{ item.source }}</span
+              >
             </div>
             <div class="item-actions">
-              <button class="ghost-btn small" @click="viewItem(item)">查看</button>
-              <button class="ghost-btn small danger" @click="deleteHistory(item.id)">删除</button>
+              <button class="ghost-btn small" @click="viewItem(item)">
+                查看
+              </button>
+              <button
+                class="ghost-btn small danger"
+                @click="deleteHistory(item.id)"
+              >
+                删除
+              </button>
             </div>
           </div>
         </div>
@@ -149,17 +133,32 @@
         <div v-else-if="activeTab === 'circles'" class="data-list">
           <div class="list-header">
             <span>展示已加入/创建的小组，支持快速进入、退出小组</span>
-            <button class="ghost-btn small" @click="discoverCircles">发现更多小组</button>
+            <button class="ghost-btn small" @click="discoverCircles">
+              发现更多小组
+            </button>
           </div>
-          <div v-for="item in currentTabList" :key="item.id" class="circle-item">
+          <div
+            v-for="item in currentTabList"
+            :key="item.id"
+            class="circle-item"
+          >
             <div class="item-content">
               <h4 class="item-title">{{ item.name }}</h4>
               <span class="item-role">{{ item.role }}</span>
-              <span class="item-meta">成员数:{{ item.memberCount }} · {{ item.desc }}</span>
+              <span class="item-meta"
+                >成员数:{{ item.memberCount }} · {{ item.desc }}</span
+              >
             </div>
             <div class="item-actions">
-              <button class="ghost-btn small" @click="enterCircle(item.id)">进入小组</button>
-              <button class="ghost-btn small danger" @click="exitCircle(item.id)">退出小组</button>
+              <button class="ghost-btn small" @click="enterCircle(item.id)">
+                进入小组
+              </button>
+              <button
+                class="ghost-btn small danger"
+                @click="exitCircle(item.id)"
+              >
+                退出小组
+              </button>
             </div>
           </div>
         </div>
@@ -167,9 +166,15 @@
         <div v-else-if="activeTab === 'publish'" class="data-list">
           <div class="list-header">
             <span>管理帖子：支持编辑、删除、置顶</span>
-            <button class="primary-btn small" @click="publishNew">+ 发布新帖</button>
+            <button class="primary-btn small" @click="publishNew">
+              + 发布新帖
+            </button>
           </div>
-          <div v-for="item in currentTabList" :key="item.id" class="publish-item">
+          <div
+            v-for="item in currentTabList"
+            :key="item.id"
+            class="publish-item"
+          >
             <div class="item-content">
               <div class="item-header">
                 <h4 class="item-title">{{ item.title }}</h4>
@@ -178,13 +183,31 @@
                   <span v-if="item.private" class="badge">仅自己</span>
                 </div>
               </div>
-              <span class="item-meta">发布于: {{ item.publishTime }} · 获赞 {{ item.likeCount || 0 }}</span>
+              <span class="item-meta"
+                >发布于: {{ item.publishTime }} · 获赞
+                {{ item.likeCount || 0 }}</span
+              >
             </div>
             <div class="item-actions">
-              <button class="ghost-btn small" @click="editPost(item.id)">编辑</button>
-              <button v-if="item.pinned" class="ghost-btn small" @click="unpinPost(item.id)">取消置顶</button>
-              <button v-else class="ghost-btn small" @click="pinPost(item.id)">置顶</button>
-              <button class="ghost-btn small danger" @click="deletePost(item.id)">删除</button>
+              <button class="ghost-btn small" @click="editPost(item.id)">
+                编辑
+              </button>
+              <button
+                v-if="item.pinned"
+                class="ghost-btn small"
+                @click="unpinPost(item.id)"
+              >
+                取消置顶
+              </button>
+              <button v-else class="ghost-btn small" @click="pinPost(item.id)">
+                置顶
+              </button>
+              <button
+                class="ghost-btn small danger"
+                @click="deletePost(item.id)"
+              >
+                删除
+              </button>
             </div>
           </div>
         </div>
@@ -193,7 +216,9 @@
           <div class="collections-sidebar">
             <div class="list-header">
               <span>收藏夹</span>
-              <button class="primary-btn small" @click="createFolder">+ 新建收藏夹</button>
+              <button class="primary-btn small" @click="createFolder">
+                + 新建收藏夹
+              </button>
             </div>
             <div class="folder-list">
               <div
@@ -212,76 +237,105 @@
             <div class="list-header">
               <span>分类管理收藏的内容/话题/帖子，支持自定义收藏夹</span>
             </div>
-            <div v-for="item in filteredCollections" :key="item.id" class="collection-item">
+            <div
+              v-for="item in filteredCollections"
+              :key="item.id"
+              class="collection-item"
+            >
               <div class="item-content">
-                <span class="item-type">{{ item.type || '内容' }}</span>
+                <span class="item-type">{{ item.type || "内容" }}</span>
                 <span class="item-title">{{ item.title }}</span>
               </div>
               <div class="item-actions">
-                <button class="ghost-btn small" @click="viewItem(item)">查看</button>
-                <button class="ghost-btn small danger" @click="uncollect(item.id)">取消收藏</button>
+                <button class="ghost-btn small" @click="viewItem(item)">
+                  查看
+                </button>
+                <button
+                  class="ghost-btn small danger"
+                  @click="uncollect(item.id)"
+                >
+                  取消收藏
+                </button>
               </div>
             </div>
           </div>
         </div>
-        <p v-if="!currentTabList.length && activeTab !== 'collections'" class="empty">暂无数据</p>
-        <p v-if="activeTab === 'collections' && !filteredCollections.length" class="empty">该收藏夹暂无内容</p>
+        <p
+          v-if="!currentTabList.length && activeTab !== 'collections'"
+          class="empty"
+        >
+          暂无数据
+        </p>
+        <p
+          v-if="activeTab === 'collections' && !filteredCollections.length"
+          class="empty"
+        >
+          该收藏夹暂无内容
+        </p>
       </template>
     </section>
   </div>
 </template>
 
 <script>
-import { mapState, mapMutations } from 'vuex';
-import { fetchHistory, fetchMyCircles, fetchMyCollections, fetchMyPublish } from '@/api/services/user';
+import { mapState, mapMutations } from "vuex";
+import {
+  fetchHistory,
+  fetchMyCircles,
+  fetchMyCollections,
+  fetchMyPublish,
+  updateCareerStage,
+  saveIdentityTag,        // ⭐ 新增
+  fetchIdentityTag        // ⭐ 新增
+} from "@/api/services/user";
 
 const tabLoaders = {
   history: fetchHistory,
   circles: fetchMyCircles,
   publish: fetchMyPublish,
-  collections: fetchMyCollections
+  collections: fetchMyCollections,
 };
 
 export default {
-  name: 'Profile',
+  name: "Profile",
   data() {
     return {
-      roles: ['学生', '职场菜鸟', '专家', '职场老手'],
+      roles: ["学生", "职场菜鸟", "专家", "职场老手"],
       pendingRole: null,
       showIdentityModal: false,
       stats: {},
       tabs: [
-        { label: '浏览历史', value: 'history' },
-        { label: '我的圈子', value: 'circles' },
-        { label: '我发布的', value: 'publish' },
-        { label: '我的收藏', value: 'collections' }
+        { label: "浏览历史", value: "history" },
+        { label: "我的圈子", value: "circles" },
+        { label: "我发布的", value: "publish" },
+        { label: "我的收藏", value: "collections" },
       ],
-      activeTab: 'history',
+      activeTab: "history",
       tabLoading: false,
       activeFolder: null,
       folders: [
-        { id: 1, name: '简历相关', count: 2 },
-        { id: 2, name: '面试技巧', count: 1 },
-        { id: 3, name: '案例拆解', count: 1 },
-        { id: 4, name: '未命名收藏夹', count: 0 }
+        { id: 1, name: "简历相关", count: 2 },
+        { id: 2, name: "面试技巧", count: 1 },
+        { id: 3, name: "案例拆解", count: 1 },
+        { id: 4, name: "未命名收藏夹", count: 0 },
       ],
       tabData: {
         history: [],
         circles: [],
         publish: [],
-        collections: []
-      }
+        collections: [],
+      },
     };
   },
   computed: {
-    ...mapState(['profile', 'settings', 'identityTag']),
+    ...mapState(["profile", "settings", "identityTag"]),
     avatarLetter() {
-      return (this.profile.nickname || 'JH').slice(0, 1).toUpperCase();
+      return (this.profile.nickname || "JH").slice(0, 1).toUpperCase();
     },
     focusList() {
       if (Array.isArray(this.profile.focus)) return this.profile.focus;
-      if (typeof this.profile.focusArea === 'string') {
-        return this.profile.focusArea.split('·').map((item) => item.trim());
+      if (typeof this.profile.focusArea === "string") {
+        return this.profile.focusArea.split("·").map((item) => item.trim());
       }
       return [];
     },
@@ -290,20 +344,36 @@ export default {
     },
     filteredCollections() {
       if (!this.activeFolder) return this.tabData.collections || [];
-      return (this.tabData.collections || []).filter(item => item.folderId === this.activeFolder);
-    }
+      return (this.tabData.collections || []).filter(
+        (item) => item.folderId === this.activeFolder
+      );
+    },
   },
   created() {
     this.loadOverview();
-    this.switchTab('history');
+    this.loadIdentityTag();
+    this.switchTab("history");
     this.activeFolder = this.folders[0]?.id || null;
     this.pendingRole = this.identityTag || this.roles[0];
   },
   methods: {
-    ...mapMutations(['setIdentityTag']),
+    ...mapMutations(["setIdentityTag", "setProfile"]),
+    async loadIdentityTag() {
+    try {
+      const tag = await fetchIdentityTag();
+      this.setIdentityTag(tag || null);
+    } catch (e) {
+      console.warn("[profile] 获取身份标签失败", e);
+    }
+  },
     async loadOverview() {
-      const data = await this.$store.dispatch('fetchProfileOverview');
-      this.stats = data.stats || {};
+      const data = await this.$store.dispatch("fetchProfileOverview");
+      this.setProfile({
+      ...data,
+      // ★★★ 关键：把后端 displayName 映射到前端 nickname
+      nickname: data.displayName
+    });
+    this.stats = data.stats || {};
     },
     async switchTab(tab) {
       if (this.activeTab === tab && this.tabData[tab].length) return;
@@ -314,22 +384,24 @@ export default {
         const data = loader ? await loader() : { list: [] };
         this.tabData = {
           ...this.tabData,
-          [tab]: data.list || []
+          [tab]: data.list || [],
         };
       } catch (error) {
-        console.error('[profile] 获取数据失败', error);
+        console.error("[profile] 获取数据失败", error);
       } finally {
         this.tabLoading = false;
       }
     },
     togglePrivacy(key) {
-      this.$store.dispatch('savePrivacySettings', { [key]: !this.settings[key] });
+      this.$store.dispatch("savePrivacySettings", {
+        [key]: !this.settings[key],
+      });
     },
     formatStatus(status) {
       const map = {
-        pending: '审核中',
-        passed: '已通过',
-        rejected: '已拒绝'
+        pending: "审核中",
+        passed: "已通过",
+        rejected: "已拒绝",
       };
       return map[status] || status;
     },
@@ -337,57 +409,65 @@ export default {
       if (item.link) {
         this.$router.push(item.link);
       } else {
-        this.$root.$refs.toast?.show('查看详情', 'info');
+        this.$root.$refs.toast?.show("查看详情", "info");
       }
     },
     deleteHistory(id) {
-      this.tabData.history = this.tabData.history.filter(item => item.id !== id);
-      this.$root.$refs.toast?.show('已删除', 'success');
+      this.tabData.history = this.tabData.history.filter(
+        (item) => item.id !== id
+      );
+      this.$root.$refs.toast?.show("已删除", "success");
     },
     clearAllHistory() {
       this.tabData.history = [];
-      this.$root.$refs.toast?.show('已清除全部历史', 'success');
+      this.$root.$refs.toast?.show("已清除全部历史", "success");
     },
     discoverCircles() {
-      this.$router.push('/circles');
+      this.$router.push("/circles");
     },
     enterCircle(id) {
       this.$router.push(`/circle/${id}`);
     },
     exitCircle(id) {
-      this.tabData.circles = this.tabData.circles.filter(item => item.id !== id);
-      this.$root.$refs.toast?.show('已退出小组', 'success');
+      this.tabData.circles = this.tabData.circles.filter(
+        (item) => item.id !== id
+      );
+      this.$root.$refs.toast?.show("已退出小组", "success");
     },
     publishNew() {
-      this.$store.commit('setPublishOpen', true);
+      this.$store.commit("setPublishOpen", true);
     },
     editPost(id) {
       this.$router.push(`/publish/edit/${id}`);
     },
     pinPost(id) {
-      const item = this.tabData.publish.find(p => p.id === id);
+      const item = this.tabData.publish.find((p) => p.id === id);
       if (item) item.pinned = true;
-      this.$root.$refs.toast?.show('已置顶', 'success');
+      this.$root.$refs.toast?.show("已置顶", "success");
     },
     unpinPost(id) {
-      const item = this.tabData.publish.find(p => p.id === id);
+      const item = this.tabData.publish.find((p) => p.id === id);
       if (item) item.pinned = false;
-      this.$root.$refs.toast?.show('已取消置顶', 'success');
+      this.$root.$refs.toast?.show("已取消置顶", "success");
     },
     deletePost(id) {
-      this.tabData.publish = this.tabData.publish.filter(item => item.id !== id);
-      this.$root.$refs.toast?.show('已删除', 'success');
+      this.tabData.publish = this.tabData.publish.filter(
+        (item) => item.id !== id
+      );
+      this.$root.$refs.toast?.show("已删除", "success");
     },
     createFolder() {
-      const name = prompt('请输入收藏夹名称');
+      const name = prompt("请输入收藏夹名称");
       if (name) {
         this.folders.push({ id: Date.now(), name, count: 0 });
-        this.$root.$refs.toast?.show('收藏夹创建成功', 'success');
+        this.$root.$refs.toast?.show("收藏夹创建成功", "success");
       }
     },
     uncollect(id) {
-      this.tabData.collections = this.tabData.collections.filter(item => item.id !== id);
-      this.$root.$refs.toast?.show('已取消收藏', 'success');
+      this.tabData.collections = this.tabData.collections.filter(
+        (item) => item.id !== id
+      );
+      this.$root.$refs.toast?.show("已取消收藏", "success");
     },
     openIdentity() {
       this.showIdentityModal = true;
@@ -401,14 +481,27 @@ export default {
       this.setIdentityTag(null);
       this.closeIdentity();
     },
-    confirmIdentity() {
-      const role = this.pendingRole || this.roles[0];
-      this.setIdentityTag(role);
-      this.pendingRole = role;
-      this.$root.$refs.toast?.show('身份已更新', 'success');
-      this.closeIdentity();
-    }
+    async confirmIdentity() {
+  const role = this.pendingRole || this.roles[0];
+  try {
+    // 1️⃣ 真正调用后端保存
+    await saveIdentityTag(role);
+
+    // 2️⃣ 更新 Vuex（仅用于显示）
+    this.setIdentityTag(role);
+
+    this.$root.$refs.toast?.show("身份已更新", "success");
+    this.closeIdentity();
+  } catch (error) {
+    console.error("[profile] 更新身份失败", error);
+    this.$root.$refs.toast?.show(
+      error?.message || "更新身份失败",
+      "error"
+    );
   }
+}
+,
+  },
 };
 </script>
 

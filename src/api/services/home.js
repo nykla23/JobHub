@@ -1,8 +1,4 @@
 import http from '../http';
-import { apiConfig } from '../config';
-import * as mockHome from '../mock/home';
-
-const useMock = apiConfig.useMock;
 const unwrap = (response) => {
   const code = response?.code ?? response?.status;
   if (code && code !== 200) {
@@ -13,15 +9,11 @@ const unwrap = (response) => {
 };
 
 export const getHomeOverview = async (params = {}) => {
-  const payload = useMock
-    ? await mockHome.getHomeOverview(params)
-    : await http.get('/api/v1/home', { params });
+  const payload = await http.get('/api/v1/home', { params });
   return unwrap(payload);
 };
 
 export const refreshRecommendFeed = async (params = {}) => {
-  const payload = useMock
-    ? await mockHome.refreshRecommend(params)
-    : await http.get('/api/v1/home/recommend/refresh', { params });
+  const payload = await http.get('/api/v1/home/recommend/refresh', { params });
   return unwrap(payload);
 };

@@ -144,9 +144,12 @@ export default new Vuex.Store({
   actions: {
     async login({ commit, dispatch }, payload) {
       const data = await loginApi(payload);
+      console.log('【登录】后端返回的数据:', data);
+      console.log('【登录】后端返回的identityTag:', data.identityTag);
       commit('setAuth', data);
       const profileData = await dispatch('fetchProfileOverview');
       const identity =
+        data.identityTag ||          
         data?.userInfo?.identity ||
         profileData?.profile?.identity ||
         profileData?.profile?.careerStage ||

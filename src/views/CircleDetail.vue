@@ -64,7 +64,7 @@
 </template>
 
 <script>
-import { fetchCirclesByRole } from '@/api/mockService';
+import { fetchGroupDetail, joinOrQuitGroup } from '@/api/services/group';
 
 export default {
   name: 'CircleDetail',
@@ -76,18 +76,10 @@ export default {
         desc: '小组简介占位'
       },
       joined: false,
-      posts: [
-        { id: 'p1', title: '动态标题占位 1', body: '动态正文内容，支持评论/引用/点赞/收藏。', time: '5 分钟前', comments: 12, fav: 4 },
-        { id: 'p2', title: '动态标题占位 2', body: '第二条动态示例，后端接入后替换。', time: '20 分钟前', comments: 8, fav: 3 }
-      ],
-      resources: [
-        { id: 'r1', title: '简历模板 / 面试真题', owner: '上传者A', downloads: 120 },
-        { id: 'r2', title: '产品案例拆解 PPT', owner: '上传者B', downloads: 86 }
-      ],
-      notices: [
-        { id: 'n1', title: '活动/答疑预告推送到成员消息', time: '今天' },
-        { id: 'n2', title: '请遵守发帖规范，违规将禁言', time: '昨天' }
-      ]
+      posts: [],
+      resources: [],
+      notices: [],
+      loading: false
     };
   },
   async created() {
@@ -95,14 +87,70 @@ export default {
   },
   methods: {
     async loadCircle() {
-      const identity = this.$store.state.identityTag || '默认';
-      const list = await fetchCirclesByRole(identity);
       const id = this.$route.params.id;
-      const found = (list || []).find((c) => c.id === id) || list[0];
-      if (found) this.circle = found;
+      if (!id) return;
+      this.loading = true;
+      try {
+        const data = await fetchGroupDetail(id);
+        const info = data.groupInfo || {};
+        this.circle = {
+          id: info.id,
+          title: info.name || '小组名称',
+          badge: info.tags?.[0] || info.activityType || '兴趣圈',
+          desc: info.intro || '',
+          meta: info.memberCount ?? 0 
+        };
+        this.joined = Boolean(info.isJoined);
+        this.posts = (data.groupDynamic?.list || []).map((item) => ({
+          id: item.id,
+          title: item.title || item.nickname || '动态',
+          body: item.content || '',
+          time: this.formatTime(item.publishTime),
+          comments: item.commentCount || 0,
+          fav: item.likeCount || 0
+        }));
+        this.resources = (data.groupResource?.list || []).map((item) => ({
+          id: item.id,
+          title: item.title,
+          owner: item.uploader,
+          downloads: item.downloadCount || 0
+        }));
+        this.notices = (data.groupNotice?.list || []).map((item) => ({
+          id: item.id,
+          title: item.title,
+          time: this.formatTime(item.publishTime)
+        }));
+      } catch (error) {
+        console.error('[circle] 获取小组详情失败', error);
+        this.$root.$refs.toast?.show('加载小组详情失败，请稍后重试', 'error');
+      } finally {
+        this.loading = false;
+      }
     },
-    toggleJoin() {
-      this.joined = !this.joined;
+    formatTime(value) {
+      if (!value) return '';
+      try {
+        const date = typeof value === 'string' ? new Date(value) : value;
+        return new Intl.DateTimeFormat('zh-CN', {
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        }).format(date);
+      } catch (e) {
+        return value;
+      }
+    },
+    async toggleJoin() {
+      const id = this.$route.params.id;
+      try {
+        await joinOrQuitGroup(id, this.joined ? 'quit' : 'join');
+        this.joined = !this.joined;
+        this.$root.$refs.toast?.show(this.joined ? '加入小组成功' : '已退出小组', 'success');
+      } catch (error) {
+        console.error('[circle] 更新小组状态失败', error);
+        this.$root.$refs.toast?.show('操作失败，请稍后再试', 'error');
+      }
     },
     publish() {
       this.$emit('open-publish');

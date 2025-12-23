@@ -27,7 +27,7 @@
 </template>
 
 <script>
-import { fetchCreditLogs } from '@/api/mockService';
+import { fetchProfileOverview } from '@/api/services/user';
 
 export default {
   name: 'Credit',
@@ -37,8 +37,14 @@ export default {
     }
   },
   async created() {
-    const logs = await fetchCreditLogs();
-    this.$store.commit('setCredit', { ...this.credit, logs });
+    try {
+      const profile = await fetchProfileOverview();
+      const score = profile?.creditScore ?? this.credit.score;
+      const logs = profile?.creditLogs || this.credit.logs;
+      this.$store.commit('setCredit', { score, logs });
+    } catch (error) {
+      console.error('[credit] 获取信用信息失败', error);
+    }
   }
 };
 </script>

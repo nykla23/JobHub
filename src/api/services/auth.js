@@ -1,10 +1,6 @@
 // src/api/services/auth.js
 
 import http from '../http';
-import { apiConfig } from '../config';
-import * as mockAuth from '../mock/auth';
-
-const useMock = apiConfig.useMock;
 
 // 统一解包工具
 const unwrap = (response) => {
@@ -31,13 +27,8 @@ export const login = async (payload) => {
 
   let data;
 
-  if (useMock) {
-    // mock 模式
-    data = await mockAuth.login(body);
-  } else {
-    // ★★★ 正确 JSON 登录（关键修复）
-    data = await http.post('/api/user/login', body);
-  }
+  // ★★★ 正确 JSON 登录（关键修复）
+  data = await http.post('/api/user/login', body);
 
   const unwrapped = unwrap(data);
 
@@ -51,32 +42,24 @@ export const login = async (payload) => {
 
 // 注册
 export const register = async (payload) => {
-  const data = useMock
-    ? await mockAuth.register(payload)
-    : await http.post('/api/user/register', payload);
+  const data = await http.post('/api/user/register', payload);
   return unwrap(data) || {};
 };
 
 // 选择身份
 export const selectIdentity = async (payload) => {
-  const data = useMock
-    ? await mockAuth.selectIdentity(payload)
-    : await http.post('/api/user/identity', null, { params: payload });
+  const data = await http.post('/api/user/identity', null, { params: payload });
   return unwrap(data);
 };
 
 // 忘记密码
 export const resetPassword = async (payload) => {
-  const data = useMock
-    ? await mockAuth.resetPassword(payload)
-    : await http.post('/api/user/forgotpassword', payload);
+  const data = await http.post('/api/user/forgotpassword', payload);
   return unwrap(data);
 };
 
 // 修改密码
 export const changePassword = async (payload) => {
-  const data = useMock
-    ? await mockAuth.resetPassword(payload)
-    : await http.put('/api/user/password', payload);
+  const data = await http.put('/api/user/password', payload);
   return unwrap(data);
 };

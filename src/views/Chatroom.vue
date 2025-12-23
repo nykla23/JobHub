@@ -52,41 +52,33 @@
 </template>
 
 <script>
-import { chatroomsMock } from '@/mock/data';
 import { mapState } from 'vuex';
+import {
+  fetchChatroomDetail,
+  generateChatroomNote,
+  sendChatroomMessage
+} from '@/api/services/topic';
 
 export default {
   name: 'Chatroom',
   data() {
     return {
       room: {
-        title: '秋招求职聊天室',
-        theme: '秋招求职交流',
-        status: 'ongoing',
-        statusLabel: '实时互动中',
-        onlineCount: 1285,
-        host: 'HR Jane',
-        startTime: '19:00',
-        endTime: '21:00'
+        title: '聊天室',
+        theme: '',
+        status: 'preview',
+        statusLabel: '加载中',
+        onlineCount: 0,
+        host: '',
+        startTime: '',
+        endTime: '',
+        notice: ''
       },
-      messages: chatroomsMock.messages?.list || [
-        {
-          id: 1,
-          nickname: 'HR Jane',
-          content: '大家好，欢迎来到秋招求职聊天室，有问题可以直接提问~',
-          sendTime: '19:00',
-          isHost: true
-        },
-        {
-          id: 2,
-          nickname: '叶同学',
-          content: '请问 HR，简历上的项目经历需要写多少个合适？',
-          sendTime: '19:05',
-          isHost: false
-        }
-      ],
+      pinnedMessage: null,
+      messages: [],
       emojis: ['😀', '😍', '😎', '👍', '🔥'],
-      input: ''
+      input: '',
+      loading: false
     };
   },
   computed: {
@@ -96,54 +88,102 @@ export default {
     }
   },
   created() {
-    this.bindRoom();
+    this.loadRoom();
   },
   methods: {
-    bindRoom() {
+    async loadRoom() {
       const id = this.$route.params.id;
-      const live = chatroomsMock.live?.find((item) => item.id === id);
-      const upcoming = chatroomsMock.upcoming?.find((item) => item.id === id);
-      const ended = chatroomsMock.ended?.find((item) => item.id === id);
-      const source = live || upcoming || ended;
-      if (source) {
+      if (!id) return;
+      this.loading = true;
+      try {
+        const data = await fetchChatroomDetail(id);
+        const info = data.chatroomInfo || {};
         this.room = {
-          title: source.title,
-          theme: source.desc || source.theme || '求职交流',
-          status: live ? 'ongoing' : upcoming ? 'preview' : 'ended',
-          statusLabel: live ? '实时互动中' : upcoming ? '聊天室预告' : '已结束',
-          onlineCount: source.audience || 0,
-          host: source.host || '主持人',
-          startTime: source.time || '19:00',
-          endTime: source.endTime || '21:00'
+          title: info.title || '聊天室',
+          theme: info.theme || info.desc || '',
+          status: info.status || 'preview',
+          statusLabel: this.mapStatus(info.status || 'preview'),
+          onlineCount: info.onlineCount || 0,
+          host: info.host || '主持人',
+          startTime: this.formatTime(info.startTime),
+          endTime: this.formatTime(info.endTime),
+          notice: info.notice || ''
         };
+        this.pinnedMessage = data.pinnedMessage || null;
+        this.messages = (data.messages?.list || []).map(this.normalizeMessage);
+      } catch (error) {
+        console.error('[chatroom] 获取详情失败', error);
+        this.$root.$refs.toast?.show('聊天室详情加载失败，请稍后重试', 'error');
+      } finally {
+        this.loading = false;
+      }
+    },
+    mapStatus(status) {
+      if (status === 'ongoing') return '实时互动中';
+      if (status === 'ended') return '已结束';
+      return '聊天室预告';
+    },
+    normalizeMessage(msg) {
+      return {
+        id: msg.id || msg.messageId || Date.now(),
+        nickname: msg.nickname || msg.sender || '访客',
+        content: msg.content || msg.body || '',
+        sendTime: this.formatTime(msg.sendTime || msg.createdAt),
+        isHost: Boolean(msg.isHost)
+      };
+    },
+    formatTime(value) {
+      if (!value) return '';
+      try {
+        const date = typeof value === 'string' ? new Date(value) : value;
+        return new Intl.DateTimeFormat('zh-CN', {
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        }).format(date);
+      } catch (e) {
+        return value;
       }
     },
     appendEmoji(emoji) {
       this.input += emoji;
     },
-    send() {
+    async send() {
       if (!this.input) return;
-      this.messages.push({
-        id: Date.now(),
-        nickname: this.userInfo?.nickname || '我',
-        content: this.input,
-        sendTime: '刚刚',
-        isHost: !!this.userInfo?.isAdmin
-      });
-      this.input = '';
-      this.$nextTick(() => {
-        const box = this.$refs.messages;
-        if (box) box.scrollTop = box.scrollHeight;
-      });
+      const id = this.$route.params.id;
+      try {
+        const resp = await sendChatroomMessage(id, { content: this.input });
+        const payload = resp?.message || resp;
+        this.messages.push(this.normalizeMessage(payload));
+        this.input = '';
+        this.$nextTick(() => {
+          const box = this.$refs.messages;
+          if (box) box.scrollTop = box.scrollHeight;
+        });
+      } catch (error) {
+        console.error('[chatroom] 发送消息失败', error);
+        this.$root.$refs.toast?.show('发送失败，请稍后再试', 'error');
+      }
     },
-    announce() {
-      this.$root.$refs.toast?.show('预告创建成功（占位）', 'success');
+    async announce() {
+      this.$root.$refs.toast?.show('聊天室公告将通过后端接口发布', 'info');
     },
-    pinMessage() {
-      this.$root.$refs.toast?.show('已置顶最新消息（占位）', 'info');
+    async pinMessage() {
+      if (!this.messages.length) return;
+      const latest = this.messages[this.messages.length - 1];
+      this.pinnedMessage = latest;
+      this.$root.$refs.toast?.show('已置顶最新消息', 'success');
     },
-    generateNote() {
-      this.$root.$refs.toast?.show('精华笔记生成中（占位）', 'info');
+    async generateNote() {
+      const id = this.$route.params.id;
+      try {
+        await generateChatroomNote(id);
+        this.$root.$refs.toast?.show('精华笔记生成中，请稍后查看', 'info');
+      } catch (error) {
+        console.error('[chatroom] 生成笔记失败', error);
+        this.$root.$refs.toast?.show('生成笔记失败', 'error');
+      }
     }
   }
 };
