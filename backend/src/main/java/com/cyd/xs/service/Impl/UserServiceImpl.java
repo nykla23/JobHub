@@ -84,6 +84,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setStatus("ACTIVE");
         user.setCreditScore(100);
 
+        if (registerDTO.getIdentityTag() != null && !registerDTO.getIdentityTag().trim().isEmpty()) {
+            user.setIdentityTag(registerDTO.getIdentityTag());
+            logger.info("【注册】设置身份标签: {}", registerDTO.getIdentityTag());
+        }
+
         UserProfile profile = new UserProfile();
         profile.setBio(registerDTO.getBio());
         profile.setCareerStage(registerDTO.getCareerStage());
@@ -140,6 +145,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         dto.setToken(jwtConfig.generateToken(user.getId().toString()));
         dto.setExpireTime(jwtConfig.getExpireTime());
 
+        dto.setIdentityTag(user.getIdentityTag());
+
+        if (dto.getIdentityTag() == null || dto.getIdentityTag().trim().isEmpty()) {
+            try {
+                UserProfile profile = JSONUtil.toBean(user.getProfileJson(), UserProfile.class);
+                if (profile != null && profile.getCareerStage() != null) {
+                    dto.setIdentityTag(profile.getCareerStage());
+                    logger.info("【登录】从profileJson中获取身份标签: {}", profile.getCareerStage());
+                }
+            } catch (Exception e) {
+                logger.warn("【登录】解析profileJson失败", e);
+            }
+        }
+        logger.info("【登录】用户 {} 登录成功，身份标签: {}", user.getUsername(), dto.getIdentityTag());
         return dto;
     }
 

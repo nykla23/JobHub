@@ -18,6 +18,8 @@ public class LoginResponseDTO {
     private String token;       // JWT令牌
     private LocalDateTime expireTime; // 令牌过期时间
 
+    private String identityTag;
+
     public Long getUserId() {
         return userId;
     }
@@ -72,5 +74,13 @@ public class LoginResponseDTO {
 
     public void setExpireTime(LocalDateTime expireTime) {
         this.expireTime = expireTime;
+    }
+
+    public String getIdentityTag() {
+        return identityTag;
+    }
+
+    public void setIdentityTag(String identityTag) {
+        this.identityTag = identityTag;
     }
 }

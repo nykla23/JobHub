@@ -26,6 +26,9 @@ public class UserRegisterDTO {
 
     private String avatarUrl;       // 头像地址（可为空）
 
+    // 身份标签字段
+    private String identityTag;
+
     // 扩展信息（注册时可选填）
     private String bio;
     private String careerStage;
